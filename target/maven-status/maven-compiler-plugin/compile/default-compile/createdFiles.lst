@@ -1,11 +1,15 @@
 com\duoc\guia_despacho\dto\ActualizarGuiaRequest.class
 com\duoc\guia_despacho\model\GuiaDespacho.class
+com\duoc\guia_despacho\config\SecurityConfig.class
 com\duoc\guia_despacho\dto\GuiaDespachoResponse.class
 com\duoc\guia_despacho\exception\PermisoDenegadoException.class
 com\duoc\guia_despacho\exception\GuiaNoEncontradaException.class
 com\duoc\guia_despacho\model\GuiaDespacho$GuiaDespachoBuilder.class
 com\duoc\guia_despacho\dto\CrearGuiaRequest.class
 com\duoc\guia_despacho\GuiaDespachoApplication.class
+com\duoc\guia_despacho\config\JsonSecurityResponseWriter.class
+com\duoc\guia_despacho\config\JwtRolesConverter.class
+com\duoc\guia_despacho\config\AudienceValidator.class
 com\duoc\guia_despacho\repository\GuiaDespachoRepository.class
 com\duoc\guia_despacho\config\S3Config.class
 com\duoc\guia_despacho\controller\GuiaDespachoController.class

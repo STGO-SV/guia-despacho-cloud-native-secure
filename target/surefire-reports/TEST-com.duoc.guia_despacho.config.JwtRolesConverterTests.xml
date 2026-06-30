@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="com.duoc.guia_despacho.GuiaDespachoApplicationTests" time="1.684" tests="1" errors="0" skipped="0" failures="0" flakes="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="com.duoc.guia_despacho.config.JwtRolesConverterTests" time="0.05" tests="9" errors="0" skipped="0" failures="0" flakes="0">
   <properties>
     <property name="java.specification.version" value="17"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -9,11 +9,8 @@
     <property name="sun.arch.data.model" value="64"/>
     <property name="user.variant" value=""/>
     <property name="java.vendor.url" value="https://java.oracle.com/"/>
-    <property name="user.timezone" value="America/Santiago"/>
-    <property name="org.jboss.logging.provider" value="slf4j"/>
     <property name="os.name" value="Windows 11"/>
     <property name="java.vm.specification.version" value="17"/>
-    <property name="APPLICATION_NAME" value="guia-despacho"/>
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="user.country" value="ES"/>
     <property name="sun.boot.library.path" value="C:\Program Files\Java\jdk-17\bin"/>
@@ -32,8 +29,6 @@
     <property name="line.separator" value="&#10;"/>
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
-    <property name="FILE_LOG_CHARSET" value="windows-1252"/>
-    <property name="java.awt.headless" value="true"/>
     <property name="surefire.real.class.path" value="C:\Users\santi\AppData\Local\Temp\surefire2384634373826284579\surefirebooter-20260629234453679_3.jar"/>
     <property name="user.script" value=""/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
@@ -47,14 +42,11 @@
     <property name="localRepository" value="C:\Users\santi\.m2\repository"/>
     <property name="java.vendor.url.bug" value="https://bugreport.java.com/bugreport/"/>
     <property name="java.io.tmpdir" value="C:\Users\santi\AppData\Local\Temp\"/>
-    <property name="com.zaxxer.hikari.pool_number" value="2"/>
     <property name="java.version" value="17.0.9"/>
     <property name="user.dir" value="C:\Users\santi\OneDrive\Documents\Analista Programador\2026\I\Desarrollo_Backend\SpringBoot\guia-despacho"/>
     <property name="os.arch" value="amd64"/>
     <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
-    <property name="PID" value="32592"/>
     <property name="sun.os.patch.level" value=""/>
-    <property name="CONSOLE_LOG_CHARSET" value="windows-1252"/>
     <property name="native.encoding" value="Cp1252"/>
     <property name="java.library.path" value="C:\Program Files\Java\jdk-17\bin;C:\WINDOWS\Sun\Java\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\Users\santi\.codex\tmp\arg0\codex-arg0UwYToQ;C:\Users\santi\.cache\codex-runtimes\codex-primary-runtime\dependencies\bin;C:\Python314\Scripts\;C:\Python314\;C:\Python313\Scripts\;C:\Python313\;C:\Python312\;C:\Program Files\Java\jdk-17\bin;C:\Program Files\Common Files\Oracle\Java\javapath;C:\windows\system32;C:\windows;C:\windows\System32\Wbem;C:\windows\System32\WindowsPowerShell\v1.0\;C:\windows\System32\OpenSSH\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\SafeNet\Authentication\SAC\x64;C:\Program Files\SafeNet\Authentication\SAC\x32;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\HP\HP One Agent;C:\ProgramData\chocolatey\bin;C:\Python312\Scripts\;C:\Oracle;C:\Program Files\NVIDIA Corporation\NVIDIA app\NvDLISR;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\nodejs\;C:\Program Files\Git\cmd;C:\Program Files\Docker\Docker\resources\bin;C:\Program Files\MySQL\MySQL Shell 8.0\bin\;C:\Users\santi\AppData\Local\Programs\Python\Python311\Scripts\;C:\Users\santi\AppData\Local\Programs\Python\Python311\;C:\Users\santi\AppData\Local\Microsoft\WindowsApps;C:\Users\santi\AppData\Local\Programs\Microsoft VS Code\bin;C:\Program Files\heroku\bin;C:\Users\santi\AppData\Local\GitHubDesktop\bin;C:\Users\santi\AppData\Local\JetBrains\IntelliJ IDEA 2024.3\bin;C:\Users\santi\AppData\Roaming\npm;C:\Users\santi\AppData\Local\OpenAI\Codex\bin\ada252862d154cdd;C:\Program Files\WindowsApps\OpenAI.Codex_26.623.5546.0_x64__2p2nqsd0c76g0\app\resources;."/>
     <property name="java.vm.info" value="mixed mode, sharing"/>
@@ -62,45 +54,14 @@
     <property name="java.vm.version" value="17.0.9+11-LTS-201"/>
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="java.class.version" value="61.0"/>
-    <property name="LOGGED_APPLICATION_NAME" value="[guia-despacho] "/>
   </properties>
-  <testcase name="contextLoads" classname="com.duoc.guia_despacho.GuiaDespachoApplicationTests" time="0.009">
-    <system-out><![CDATA[2026-06-29T23:45:08.891-04:00  INFO 32592 --- [guia-despacho] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.duoc.guia_despacho.GuiaDespachoApplicationTests]: GuiaDespachoApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-2026-06-29T23:45:08.915-04:00  INFO 32592 --- [guia-despacho] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.duoc.guia_despacho.GuiaDespachoApplication for test class com.duoc.guia_despacho.GuiaDespachoApplicationTests
-2026-06-29T23:45:08.924-04:00  INFO 32592 --- [guia-despacho] [           main] o.s.b.d.r.RestartApplicationListener     : Restart disabled due to context in which it is running
-
-  .   ____          _            __ _ _
- /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
-( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
- \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
-  '  |____| .__|_| |_|_| |_\__, | / / / /
- =========|_|==============|___/=/_/_/_/
-
- :: Spring Boot ::               (v3.5.14)
-
-2026-06-29T23:45:08.981-04:00  INFO 32592 --- [guia-despacho] [           main] c.d.g.GuiaDespachoApplicationTests       : Starting GuiaDespachoApplicationTests using Java 17.0.9 with PID 32592 (started by santi in C:\Users\santi\OneDrive\Documents\Analista Programador\2026\I\Desarrollo_Backend\SpringBoot\guia-despacho)
-2026-06-29T23:45:08.982-04:00  INFO 32592 --- [guia-despacho] [           main] c.d.g.GuiaDespachoApplicationTests       : No active profile set, falling back to 1 default profile: "default"
-2026-06-29T23:45:09.426-04:00  INFO 32592 --- [guia-despacho] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2026-06-29T23:45:09.443-04:00  INFO 32592 --- [guia-despacho] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 12 ms. Found 1 JPA repository interface.
-2026-06-29T23:45:09.804-04:00  INFO 32592 --- [guia-despacho] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2026-06-29T23:45:09.816-04:00  INFO 32592 --- [guia-despacho] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
-2026-06-29T23:45:09.855-04:00  INFO 32592 --- [guia-despacho] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
-2026-06-29T23:45:09.858-04:00  INFO 32592 --- [guia-despacho] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
-2026-06-29T23:45:09.859-04:00  INFO 32592 --- [guia-despacho] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection conn10: url=jdbc:h2:mem:guiadespacho user=SA
-2026-06-29T23:45:09.860-04:00  INFO 32592 --- [guia-despacho] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
-2026-06-29T23:45:09.861-04:00  INFO 32592 --- [guia-despacho] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
-	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-2)']
-	Database driver: undefined/unknown
-	Database version: 2.3.232
-	Autocommit mode: undefined/unknown
-	Isolation level: undefined/unknown
-	Minimum pool size: undefined/unknown
-	Maximum pool size: undefined/unknown
-2026-06-29T23:45:09.933-04:00  INFO 32592 --- [guia-despacho] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2026-06-29T23:45:09.944-04:00  INFO 32592 --- [guia-despacho] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2026-06-29T23:45:10.205-04:00  WARN 32592 --- [guia-despacho] [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
-2026-06-29T23:45:10.475-04:00  INFO 32592 --- [guia-despacho] [           main] o.s.b.a.h2.H2ConsoleAutoConfiguration    : H2 console available at '/h2-console'. Database available at 'jdbc:h2:mem:guiadespacho'
-2026-06-29T23:45:10.557-04:00  INFO 32592 --- [guia-despacho] [           main] c.d.g.GuiaDespachoApplicationTests       : Started GuiaDespachoApplicationTests in 1.634 seconds (process running for 16.663)
-]]></system-out>
-  </testcase>
+  <testcase name="tokenSinRolesNoConcedeAuthorities" classname="com.duoc.guia_despacho.config.JwtRolesConverterTests" time="0.011"/>
+  <testcase name="rolYaPrefijadoNoDuplicaRole" classname="com.duoc.guia_despacho.config.JwtRolesConverterTests" time="0.017"/>
+  <testcase name="ignoraRolesVaciosYEvitaDuplicados" classname="com.duoc.guia_despacho.config.JwtRolesConverterTests" time="0.001"/>
+  <testcase name="claimRolesComoListaSeConvierteARoleAuthorities" classname="com.duoc.guia_despacho.config.JwtRolesConverterTests" time="0.002"/>
+  <testcase name="noConvierteScopesEnRoles" classname="com.duoc.guia_despacho.config.JwtRolesConverterTests" time="0.002"/>
+  <testcase name="rolConEspaciosAccidentalesSeLimpia" classname="com.duoc.guia_despacho.config.JwtRolesConverterTests" time="0.002"/>
+  <testcase name="claimRolesComoArregloSeConvierteARoleAuthorities" classname="com.duoc.guia_despacho.config.JwtRolesConverterTests" time="0.002"/>
+  <testcase name="claimRolesComoStringSeConvierteARoleAuthority" classname="com.duoc.guia_despacho.config.JwtRolesConverterTests" time="0.002"/>
+  <testcase name="claimPersonalizadoRealComoStringSeConvierteARoleAuthority" classname="com.duoc.guia_despacho.config.JwtRolesConverterTests" time="0.001"/>
 </testsuite>

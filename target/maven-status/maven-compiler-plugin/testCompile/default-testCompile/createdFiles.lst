@@ -1,1 +1,4 @@
+com\duoc\guia_despacho\config\AudienceValidatorTests.class
 com\duoc\guia_despacho\GuiaDespachoApplicationTests.class
+com\duoc\guia_despacho\config\JwtRolesConverterTests.class
+com\duoc\guia_despacho\controller\GuiaDespachoControllerSecurityTests.class

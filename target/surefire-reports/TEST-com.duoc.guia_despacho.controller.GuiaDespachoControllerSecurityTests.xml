@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="com.duoc.guia_despacho.GuiaDespachoApplicationTests" time="1.684" tests="1" errors="0" skipped="0" failures="0" flakes="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="com.duoc.guia_despacho.controller.GuiaDespachoControllerSecurityTests" time="13.896" tests="8" errors="0" skipped="0" failures="0" flakes="0">
   <properties>
     <property name="java.specification.version" value="17"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -47,7 +47,7 @@
     <property name="localRepository" value="C:\Users\santi\.m2\repository"/>
     <property name="java.vendor.url.bug" value="https://bugreport.java.com/bugreport/"/>
     <property name="java.io.tmpdir" value="C:\Users\santi\AppData\Local\Temp\"/>
-    <property name="com.zaxxer.hikari.pool_number" value="2"/>
+    <property name="com.zaxxer.hikari.pool_number" value="1"/>
     <property name="java.version" value="17.0.9"/>
     <property name="user.dir" value="C:\Users\santi\OneDrive\Documents\Analista Programador\2026\I\Desarrollo_Backend\SpringBoot\guia-despacho"/>
     <property name="os.arch" value="amd64"/>
@@ -64,10 +64,11 @@
     <property name="java.class.version" value="61.0"/>
     <property name="LOGGED_APPLICATION_NAME" value="[guia-despacho] "/>
   </properties>
-  <testcase name="contextLoads" classname="com.duoc.guia_despacho.GuiaDespachoApplicationTests" time="0.009">
-    <system-out><![CDATA[2026-06-29T23:45:08.891-04:00  INFO 32592 --- [guia-despacho] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.duoc.guia_despacho.GuiaDespachoApplicationTests]: GuiaDespachoApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-2026-06-29T23:45:08.915-04:00  INFO 32592 --- [guia-despacho] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.duoc.guia_despacho.GuiaDespachoApplication for test class com.duoc.guia_despacho.GuiaDespachoApplicationTests
-2026-06-29T23:45:08.924-04:00  INFO 32592 --- [guia-despacho] [           main] o.s.b.d.r.RestartApplicationListener     : Restart disabled due to context in which it is running
+  <testcase name="getGuiasConDescargaGuiasDevuelve403" classname="com.duoc.guia_despacho.controller.GuiaDespachoControllerSecurityTests" time="0.172">
+    <system-out><![CDATA[Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+23:44:55.219 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.duoc.guia_despacho.controller.GuiaDespachoControllerSecurityTests]: GuiaDespachoControllerSecurityTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+23:44:55.425 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.duoc.guia_despacho.GuiaDespachoApplication for test class com.duoc.guia_despacho.controller.GuiaDespachoControllerSecurityTests
+23:44:55.668 [main] INFO org.springframework.boot.devtools.restart.RestartApplicationListener -- Restart disabled due to context in which it is running
 
   .   ____          _            __ _ _
  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
@@ -78,29 +79,57 @@
 
  :: Spring Boot ::               (v3.5.14)
 
-2026-06-29T23:45:08.981-04:00  INFO 32592 --- [guia-despacho] [           main] c.d.g.GuiaDespachoApplicationTests       : Starting GuiaDespachoApplicationTests using Java 17.0.9 with PID 32592 (started by santi in C:\Users\santi\OneDrive\Documents\Analista Programador\2026\I\Desarrollo_Backend\SpringBoot\guia-despacho)
-2026-06-29T23:45:08.982-04:00  INFO 32592 --- [guia-despacho] [           main] c.d.g.GuiaDespachoApplicationTests       : No active profile set, falling back to 1 default profile: "default"
-2026-06-29T23:45:09.426-04:00  INFO 32592 --- [guia-despacho] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2026-06-29T23:45:09.443-04:00  INFO 32592 --- [guia-despacho] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 12 ms. Found 1 JPA repository interface.
-2026-06-29T23:45:09.804-04:00  INFO 32592 --- [guia-despacho] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2026-06-29T23:45:09.816-04:00  INFO 32592 --- [guia-despacho] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
-2026-06-29T23:45:09.855-04:00  INFO 32592 --- [guia-despacho] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
-2026-06-29T23:45:09.858-04:00  INFO 32592 --- [guia-despacho] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
-2026-06-29T23:45:09.859-04:00  INFO 32592 --- [guia-despacho] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection conn10: url=jdbc:h2:mem:guiadespacho user=SA
-2026-06-29T23:45:09.860-04:00  INFO 32592 --- [guia-despacho] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
-2026-06-29T23:45:09.861-04:00  INFO 32592 --- [guia-despacho] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
-	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-2)']
+2026-06-29T23:44:56.169-04:00  INFO 32592 --- [guia-despacho] [           main] .g.c.GuiaDespachoControllerSecurityTests : Starting GuiaDespachoControllerSecurityTests using Java 17.0.9 with PID 32592 (started by santi in C:\Users\santi\OneDrive\Documents\Analista Programador\2026\I\Desarrollo_Backend\SpringBoot\guia-despacho)
+2026-06-29T23:44:56.172-04:00  INFO 32592 --- [guia-despacho] [           main] .g.c.GuiaDespachoControllerSecurityTests : No active profile set, falling back to 1 default profile: "default"
+2026-06-29T23:44:57.203-04:00  INFO 32592 --- [guia-despacho] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-06-29T23:44:57.309-04:00  INFO 32592 --- [guia-despacho] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 84 ms. Found 1 JPA repository interface.
+2026-06-29T23:45:01.377-04:00  INFO 32592 --- [guia-despacho] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-06-29T23:45:01.752-04:00  INFO 32592 --- [guia-despacho] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.49.Final
+2026-06-29T23:45:01.949-04:00  INFO 32592 --- [guia-despacho] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-06-29T23:45:02.306-04:00  INFO 32592 --- [guia-despacho] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-06-29T23:45:02.417-04:00  INFO 32592 --- [guia-despacho] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-06-29T23:45:02.855-04:00  INFO 32592 --- [guia-despacho] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:guiadespacho user=SA
+2026-06-29T23:45:02.861-04:00  INFO 32592 --- [guia-despacho] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-06-29T23:45:03.063-04:00  INFO 32592 --- [guia-despacho] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
 	Database driver: undefined/unknown
 	Database version: 2.3.232
 	Autocommit mode: undefined/unknown
 	Isolation level: undefined/unknown
 	Minimum pool size: undefined/unknown
 	Maximum pool size: undefined/unknown
-2026-06-29T23:45:09.933-04:00  INFO 32592 --- [guia-despacho] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2026-06-29T23:45:09.944-04:00  INFO 32592 --- [guia-despacho] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2026-06-29T23:45:10.205-04:00  WARN 32592 --- [guia-despacho] [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
-2026-06-29T23:45:10.475-04:00  INFO 32592 --- [guia-despacho] [           main] o.s.b.a.h2.H2ConsoleAutoConfiguration    : H2 console available at '/h2-console'. Database available at 'jdbc:h2:mem:guiadespacho'
-2026-06-29T23:45:10.557-04:00  INFO 32592 --- [guia-despacho] [           main] c.d.g.GuiaDespachoApplicationTests       : Started GuiaDespachoApplicationTests in 1.634 seconds (process running for 16.663)
+2026-06-29T23:45:04.233-04:00  INFO 32592 --- [guia-despacho] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+Hibernate: 
+    create table guia_despacho (
+        id bigint generated by default as identity,
+        descripcion_carga varchar(255),
+        destinatario varchar(255),
+        direccion_destino varchar(255),
+        estado varchar(255),
+        fecha date,
+        fecha_actualizacion timestamp(6),
+        fecha_creacion timestamp(6),
+        nombre_archivo varchar(255),
+        numero_guia varchar(255),
+        ruta_efs varchar(255),
+        s3_key varchar(255),
+        transportista varchar(255),
+        primary key (id)
+    )
+2026-06-29T23:45:04.326-04:00  INFO 32592 --- [guia-despacho] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-06-29T23:45:05.825-04:00  WARN 32592 --- [guia-despacho] [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-06-29T23:45:07.922-04:00  INFO 32592 --- [guia-despacho] [           main] o.s.b.a.h2.H2ConsoleAutoConfiguration    : H2 console available at '/h2-console'. Database available at 'jdbc:h2:mem:guiadespacho'
+2026-06-29T23:45:08.177-04:00  INFO 32592 --- [guia-despacho] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-06-29T23:45:08.177-04:00  INFO 32592 --- [guia-despacho] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-06-29T23:45:08.179-04:00  INFO 32592 --- [guia-despacho] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
+2026-06-29T23:45:08.238-04:00  INFO 32592 --- [guia-despacho] [           main] .g.c.GuiaDespachoControllerSecurityTests : Started GuiaDespachoControllerSecurityTests in 12.583 seconds (process running for 14.345)
 ]]></system-out>
   </testcase>
+  <testcase name="postGuiasSinJwtDevuelve401" classname="com.duoc.guia_despacho.controller.GuiaDespachoControllerSecurityTests" time="0.015"/>
+  <testcase name="getGuiasConGestionGuiasSuperaAutorizacion" classname="com.duoc.guia_despacho.controller.GuiaDespachoControllerSecurityTests" time="0.166"/>
+  <testcase name="postGuiasConTokenSinRolesDevuelve403" classname="com.duoc.guia_despacho.controller.GuiaDespachoControllerSecurityTests" time="0.012"/>
+  <testcase name="postGuiasConDescargaGuiasDevuelve403" classname="com.duoc.guia_despacho.controller.GuiaDespachoControllerSecurityTests" time="0.013"/>
+  <testcase name="descargarConGestionGuiasDevuelve403" classname="com.duoc.guia_despacho.controller.GuiaDespachoControllerSecurityTests" time="0.01"/>
+  <testcase name="descargarConDescargaGuiasSuperaAutorizacion" classname="com.duoc.guia_despacho.controller.GuiaDespachoControllerSecurityTests" time="0.02"/>
+  <testcase name="postGuiasConGestionGuiasSuperaAutorizacion" classname="com.duoc.guia_despacho.controller.GuiaDespachoControllerSecurityTests" time="0.172"/>
 </testsuite>
