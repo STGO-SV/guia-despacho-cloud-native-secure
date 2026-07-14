@@ -1,0 +1,4 @@
+Repositorio del proyecto:
+https://github.com/STGO-SV/guia-despacho-cloud-native-secure.git
+
+Nota: si el repositorio es privado, el evaluador necesitará permisos de lectura.

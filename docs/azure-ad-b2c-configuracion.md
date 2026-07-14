@@ -63,11 +63,16 @@ $env:APP_EFS_PATH="./efs-local"
 | Metodo | Endpoint | Rol requerido |
 | --- | --- | --- |
 | `POST` | `/api/guias` | `GESTION_GUIAS` |
+| `GET` | `/api/guias/{id}` | `GESTION_GUIAS` |
 | `POST` | `/api/guias/{id}/subir-s3` | `GESTION_GUIAS` |
 | `GET` | `/api/guias/{id}/descargar` | `DESCARGA_GUIAS` |
 | `PUT` | `/api/guias/{id}` | `GESTION_GUIAS` |
 | `DELETE` | `/api/guias/{id}` | `GESTION_GUIAS` |
 | `GET` | `/api/guias?transportista=...&fecha=...` | `GESTION_GUIAS` |
+| `POST` | `/api/procesamiento/guias/{id}` | `GESTION_GUIAS` |
+| `GET` | `/api/procesamiento/colas` | `GESTION_GUIAS` |
+
+`GET /actuator/health` es la unica ruta publica y no entrega datos de negocio.
 
 `GESTION_GUIAS` no entrega permiso automatico para descargar. Para descargar se requiere `DESCARGA_GUIAS`.
 

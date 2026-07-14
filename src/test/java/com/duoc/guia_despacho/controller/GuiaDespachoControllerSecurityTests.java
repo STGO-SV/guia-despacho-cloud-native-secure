@@ -32,7 +32,9 @@ import org.springframework.test.web.servlet.MockMvc;
         "spring.security.oauth2.resourceserver.jwt.issuer-uri=https://login.example.com/test/v2.0/",
         "app.security.jwk-set-uri=https://login.example.com/test/discovery/v2.0/keys",
         "app.security.audience=cliente-test",
-        "app.security.roles-claim=roles"
+        "app.security.roles-claim=roles",
+        "spring.rabbitmq.listener.simple.auto-startup=false",
+        "management.health.rabbit.enabled=false"
 })
 class GuiaDespachoControllerSecurityTests {
 
@@ -72,7 +74,7 @@ class GuiaDespachoControllerSecurityTests {
                         .with(jwtConRol("GESTION_GUIAS"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(CREAR_GUIA_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
     }
 
     @Test
@@ -133,6 +135,20 @@ class GuiaDespachoControllerSecurityTests {
                         .with(jwtConRol("DESCARGA_GUIAS"))
                         .param("transportista", "Transportes Norte")
                         .param("fecha", "2026-06-29"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void publicarProcesamientoConGestionDevuelve202() throws Exception {
+        mockMvc.perform(post("/api/procesamiento/guias/1")
+                        .with(jwtConRol("GESTION_GUIAS")))
+                .andExpect(status().isAccepted());
+    }
+
+    @Test
+    void publicarProcesamientoConDescargaDevuelve403() throws Exception {
+        mockMvc.perform(post("/api/procesamiento/guias/1")
+                        .with(jwtConRol("DESCARGA_GUIAS")))
                 .andExpect(status().isForbidden());
     }
 

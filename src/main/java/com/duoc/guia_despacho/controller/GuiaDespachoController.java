@@ -13,6 +13,7 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,12 +33,22 @@ public class GuiaDespachoController {
 
     @PostMapping
     public ResponseEntity<GuiaDespachoResponse> crearGuia(@Valid @RequestBody CrearGuiaRequest request) {
-        return ResponseEntity.ok(guiaService.crearGuia(request));
+        GuiaDespachoResponse creada = guiaService.crearGuia(request);
+        return ResponseEntity.created(ServletUriComponentsBuilder.fromCurrentRequest()
+                        .path("/{id}")
+                        .buildAndExpand(creada.id())
+                        .toUri())
+                .body(creada);
     }
 
     @PostMapping("/{id}/subir-s3")
     public ResponseEntity<GuiaDespachoResponse> subirGuiaAS3(@PathVariable Long id) {
         return ResponseEntity.ok(guiaService.subirGuiaAS3(id));
+    }
+
+    @GetMapping("/{id}")
+    public GuiaDespachoResponse obtenerGuia(@PathVariable Long id) {
+        return guiaService.obtenerGuia(id);
     }
 
     @GetMapping("/{id}/descargar")

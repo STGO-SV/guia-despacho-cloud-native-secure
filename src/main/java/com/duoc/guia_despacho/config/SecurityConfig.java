@@ -19,6 +19,15 @@ import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static com.duoc.guia_despacho.config.SecurityRoles.DESCARGA_GUIAS;
+import static com.duoc.guia_despacho.config.SecurityRoles.GESTION_GUIAS;
 
 @Configuration
 @EnableMethodSecurity
@@ -28,13 +37,15 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             JwtAuthenticationConverter jwtAuthenticationConverter,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            CorsConfigurationSource corsConfigurationSource
     ) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) ->
@@ -52,17 +63,39 @@ public class SecurityConfig {
                                         "El usuario autenticado no tiene permisos para este recurso",
                                         objectMapper)))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.GET, "/api/guias/*/descargar").hasRole("DESCARGA_GUIAS")
-                        .requestMatchers(HttpMethod.POST, "/api/guias").hasRole("GESTION_GUIAS")
-                        .requestMatchers(HttpMethod.POST, "/api/guias/*/subir-s3").hasRole("GESTION_GUIAS")
-                        .requestMatchers(HttpMethod.PUT, "/api/guias/*").hasRole("GESTION_GUIAS")
-                        .requestMatchers(HttpMethod.DELETE, "/api/guias/*").hasRole("GESTION_GUIAS")
-                        .requestMatchers(HttpMethod.GET, "/api/guias").hasRole("GESTION_GUIAS")
-                        .anyRequest().authenticated())
+                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/guias/*/descargar").hasRole(DESCARGA_GUIAS)
+                        .requestMatchers(HttpMethod.POST, "/api/guias").hasRole(GESTION_GUIAS)
+                        .requestMatchers(HttpMethod.POST, "/api/guias/*/subir-s3").hasRole(GESTION_GUIAS)
+                        .requestMatchers(HttpMethod.PUT, "/api/guias/*").hasRole(GESTION_GUIAS)
+                        .requestMatchers(HttpMethod.DELETE, "/api/guias/*").hasRole(GESTION_GUIAS)
+                        .requestMatchers(HttpMethod.GET, "/api/guias").hasRole(GESTION_GUIAS)
+                        .requestMatchers(HttpMethod.GET, "/api/guias/*").hasRole(GESTION_GUIAS)
+                        .requestMatchers("/api/procesamiento/**").hasRole(GESTION_GUIAS)
+                        .anyRequest().denyAll())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)));
 
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource(
+            @Value("${app.security.allowed-origins}") String allowedOrigins
+    ) {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isBlank())
+                .toList());
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Correlation-ID"));
+        configuration.setExposedHeaders(List.of("Location", "Content-Disposition", "X-Correlation-ID"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
     @Bean

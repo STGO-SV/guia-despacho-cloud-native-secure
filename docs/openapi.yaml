@@ -1,0 +1,246 @@
+openapi: 3.0.3
+info:
+  title: API Guías de Despacho
+  version: 1.0.0
+  description: API protegida con access token JWT de Azure AD B2C.
+servers:
+  - url: http://localhost:8080
+    description: Local
+  - url: https://{apiId}.execute-api.{region}.amazonaws.com/{stage}
+    description: AWS API Gateway
+    variables:
+      apiId: { default: reemplazar }
+      region: { default: us-east-1 }
+      stage: { default: dev }
+security:
+  - bearerAuth: []
+paths:
+  /api/guias:
+    post:
+      summary: Crear guía, generar PDF y publicar evento
+      description: Requiere GESTION_GUIAS. Sube automáticamente a S3 si AWS_S3_AUTO_UPLOAD=true.
+      operationId: crearGuia
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CrearGuiaRequest' }
+      responses:
+        '201':
+          description: Creada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GuiaResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+    get:
+      summary: Consultar por transportista y fecha
+      description: Requiere GESTION_GUIAS.
+      operationId: buscarGuias
+      parameters:
+        - { name: transportista, in: query, required: true, schema: { type: string } }
+        - { name: fecha, in: query, required: true, schema: { type: string, format: date } }
+      responses:
+        '200':
+          description: Resultado
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/GuiaResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/guias/{id}:
+    parameters:
+      - { $ref: '#/components/parameters/GuiaId' }
+    get:
+      summary: Obtener metadata de una guía
+      description: Requiere GESTION_GUIAS.
+      responses:
+        '200':
+          description: Guía
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GuiaResponse' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      summary: Actualizar guía
+      description: Requiere GESTION_GUIAS.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ActualizarGuiaRequest' }
+      responses:
+        '200':
+          description: Actualizada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GuiaResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      summary: Eliminar guía, PDF local y objeto S3
+      description: Requiere GESTION_GUIAS.
+      responses:
+        '204': { description: Eliminada }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/guias/{id}/subir-s3:
+    parameters:
+      - { $ref: '#/components/parameters/GuiaId' }
+    post:
+      summary: Subir PDF a S3
+      description: Requiere GESTION_GUIAS.
+      responses:
+        '200':
+          description: Subida
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GuiaResponse' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/guias/{id}/descargar:
+    parameters:
+      - { $ref: '#/components/parameters/GuiaId' }
+      - { name: transportista, in: query, required: true, schema: { type: string } }
+    get:
+      summary: Descargar PDF
+      description: Requiere exclusivamente DESCARGA_GUIAS y coincidencia del transportista.
+      responses:
+        '200':
+          description: PDF
+          headers:
+            Content-Disposition: { schema: { type: string } }
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/procesamiento/guias/{id}:
+    parameters:
+      - { $ref: '#/components/parameters/GuiaId' }
+      - name: simularError
+        in: query
+        required: false
+        description: Solo para demostrar reintentos y DLQ; requiere RABBITMQ_ERROR_SIMULATION_ENABLED=true.
+        schema: { type: boolean, default: false }
+    post:
+      summary: Publicar procesamiento asíncrono
+      description: Requiere GESTION_GUIAS.
+      responses:
+        '202':
+          description: Mensaje aceptado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProcesamientoAceptado' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '403':
+          description: Rol insuficiente o simulación de error deshabilitada
+          content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /api/procesamiento/colas:
+    get:
+      summary: Consultar estado observable de ambas colas
+      description: Requiere GESTION_GUIAS.
+      responses:
+        '200':
+          description: Conteos del broker
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EstadoColas' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+  /actuator/health:
+    get:
+      summary: Health check público
+      security: []
+      responses:
+        '200': { description: UP }
+        '503': { description: DOWN }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    GuiaId:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer, format: int64, minimum: 1 }
+  responses:
+    BadRequest:
+      description: Solicitud inválida
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Unauthorized:
+      description: Token ausente o inválido
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Forbidden:
+      description: Rol o regla de transportista insuficiente
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    NotFound:
+      description: Guía inexistente
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Unavailable:
+      description: RabbitMQ no disponible
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+  schemas:
+    CrearGuiaRequest:
+      type: object
+      required: [numeroGuia, transportista, fecha, destinatario, direccionDestino, descripcionCarga]
+      properties:
+        numeroGuia: { type: string, example: GD-001 }
+        transportista: { type: string, example: Transportes Norte }
+        fecha: { type: string, format: date }
+        destinatario: { type: string, example: Cliente Demo }
+        direccionDestino: { type: string, example: Avenida 123 }
+        descripcionCarga: { type: string, example: Cajas con insumos }
+    ActualizarGuiaRequest:
+      allOf:
+        - { $ref: '#/components/schemas/CrearGuiaRequest' }
+        - type: object
+          required: [estado]
+          properties:
+            estado: { type: string, example: EN_TRANSITO }
+    GuiaResponse:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        numeroGuia: { type: string }
+        transportista: { type: string }
+        fecha: { type: string, format: date }
+        destinatario: { type: string }
+        direccionDestino: { type: string }
+        descripcionCarga: { type: string }
+        estado: { type: string }
+        nombreArchivo: { type: string }
+        rutaEfs: { type: string }
+        s3Key: { type: string, nullable: true }
+        fechaCreacion: { type: string, format: date-time }
+        fechaActualizacion: { type: string, format: date-time }
+    ProcesamientoAceptado:
+      type: object
+      properties:
+        eventoId: { type: string, format: uuid }
+        guiaId: { type: integer, format: int64 }
+        estado: { type: string, example: ACEPTADO }
+        errorSimulado: { type: boolean }
+        aceptadoEn: { type: string, format: date-time }
+    EstadoColas:
+      type: object
+      properties:
+        colaPrincipal: { type: string }
+        mensajesPrincipal: { type: integer }
+        consumidoresPrincipal: { type: integer }
+        colaErrores: { type: string }
+        mensajesError: { type: integer }
+        consumidoresError: { type: integer }
+    Error:
+      type: object
+      properties:
+        timestamp: { type: string }
+        status: { type: integer }
+        error: { type: string }
+        message: { type: string }
+        path: { type: string }

@@ -1,0 +1,311 @@
+﻿{
+    "info":  {
+                 "name":  "Guia de despacho - B2C real",
+                 "description":  "Coleccion sin secretos para validar Azure AD B2C contra la API local.",
+                 "schema":  "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+             },
+    "variable":  [
+                     {
+                         "key":  "baseUrl",
+                         "value":  "http://localhost:8080"
+                     },
+                     {
+                         "key":  "gestionAccessToken",
+                         "value":  ""
+                     },
+                     {
+                         "key":  "descargaAccessToken",
+                         "value":  ""
+                     },
+                     {
+                         "key":  "guiaId",
+                         "value":  "1"
+                     },
+                     {
+                         "key":  "eventoId",
+                         "value":  ""
+                     },
+                     {
+                         "key":  "transportista",
+                         "value":  "Transportes Norte"
+                     },
+                     {
+                         "key":  "fecha",
+                         "value":  "2026-07-13"
+                     },
+                     {
+                         "key":  "tenant",
+                         "value":  ""
+                     },
+                     {
+                         "key":  "tenantId",
+                         "value":  ""
+                     },
+                     {
+                         "key":  "policy",
+                         "value":  "B2C_1_guias_signupsignin"
+                     },
+                     {
+                         "key":  "clientId",
+                         "value":  ""
+                     },
+                     {
+                         "key":  "apiClientId",
+                         "value":  ""
+                     },
+                     {
+                         "key":  "scope",
+                         "value":  ""
+                     },
+                     {
+                         "key":  "redirectUri",
+                         "value":  "https://oauth.pstmn.io/v1/callback"
+                     }
+                 ],
+    "item":  [
+                 {
+                     "name":  "00 - Health publico",
+                     "request":  {
+                                     "method":  "GET",
+                                     "url":  "{{baseUrl}}/actuator/health"
+                                 },
+                     "event":  [
+                                   {
+                                       "listen":  "test",
+                                       "script":  {
+                                                      "type":  "text/javascript",
+                                                      "exec":  [
+                                                                   "pm.test(\u0027HTTP 200\u0027, () =\u003e pm.response.to.have.status(200));",
+                                                                   "pm.test(\u0027status UP\u0027, () =\u003e pm.expect(pm.response.json().status).to.eql(\u0027UP\u0027));"
+                                                               ]
+                                                  }
+                                   }
+                               ]
+                 },
+                 {
+                     "name":  "01 - Sin token devuelve 401",
+                     "request":  {
+                                     "method":  "GET",
+                                     "url":  "{{baseUrl}}/api/guias/{{guiaId}}"
+                                 },
+                     "event":  [
+                                   {
+                                       "listen":  "test",
+                                       "script":  {
+                                                      "type":  "text/javascript",
+                                                      "exec":  [
+                                                                   "pm.test(\u0027HTTP 401\u0027, () =\u003e pm.response.to.have.status(401));"
+                                                               ]
+                                                  }
+                                   }
+                               ]
+                 },
+                 {
+                     "name":  "02 - Token malformado devuelve 401",
+                     "request":  {
+                                     "method":  "GET",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer token-malformado"
+                                                    }
+                                                ],
+                                     "url":  "{{baseUrl}}/api/guias/{{guiaId}}"
+                                 },
+                     "event":  [
+                                   {
+                                       "listen":  "test",
+                                       "script":  {
+                                                      "type":  "text/javascript",
+                                                      "exec":  [
+                                                                   "pm.test(\u0027HTTP 401\u0027, () =\u003e pm.response.to.have.status(401));"
+                                                               ]
+                                                  }
+                                   }
+                               ]
+                 },
+                 {
+                     "name":  "10 - Gestion consulta permitida",
+                     "request":  {
+                                     "auth":  {
+                                                  "type":  "bearer",
+                                                  "bearer":  [
+                                                                 {
+                                                                     "key":  "token",
+                                                                     "value":  "{{gestionAccessToken}}",
+                                                                     "type":  "string"
+                                                                 }
+                                                             ]
+                                              },
+                                     "method":  "GET",
+                                     "url":  "{{baseUrl}}/api/guias?transportista={{transportista}}\u0026fecha={{fecha}}"
+                                 },
+                     "event":  [
+                                   {
+                                       "listen":  "test",
+                                       "script":  {
+                                                      "type":  "text/javascript",
+                                                      "exec":  [
+                                                                   "pm.test(\u0027HTTP 200\u0027, () =\u003e pm.response.to.have.status(200));"
+                                                               ]
+                                                  }
+                                   }
+                               ]
+                 },
+                 {
+                     "name":  "11 - Gestion procesa guia y devuelve 202",
+                     "request":  {
+                                     "auth":  {
+                                                  "type":  "bearer",
+                                                  "bearer":  [
+                                                                 {
+                                                                     "key":  "token",
+                                                                     "value":  "{{gestionAccessToken}}",
+                                                                     "type":  "string"
+                                                                 }
+                                                             ]
+                                              },
+                                     "method":  "POST",
+                                     "url":  "{{baseUrl}}/api/procesamiento/guias/{{guiaId}}"
+                                 },
+                     "event":  [
+                                   {
+                                       "listen":  "test",
+                                       "script":  {
+                                                      "type":  "text/javascript",
+                                                      "exec":  [
+                                                                   "pm.test(\u0027HTTP 202\u0027, () =\u003e pm.response.to.have.status(202));",
+                                                                   "const body = pm.response.json();",
+                                                                   "pm.expect(body.eventoId).to.be.a(\u0027string\u0027).and.not.empty;",
+                                                                   "pm.collectionVariables.set(\u0027eventoId\u0027, body.eventoId);"
+                                                               ]
+                                                  }
+                                   }
+                               ]
+                 },
+                 {
+                     "name":  "20 - Descarga intenta procesar y recibe 403",
+                     "request":  {
+                                     "auth":  {
+                                                  "type":  "bearer",
+                                                  "bearer":  [
+                                                                 {
+                                                                     "key":  "token",
+                                                                     "value":  "{{descargaAccessToken}}",
+                                                                     "type":  "string"
+                                                                 }
+                                                             ]
+                                              },
+                                     "method":  "POST",
+                                     "url":  "{{baseUrl}}/api/procesamiento/guias/{{guiaId}}"
+                                 },
+                     "event":  [
+                                   {
+                                       "listen":  "test",
+                                       "script":  {
+                                                      "type":  "text/javascript",
+                                                      "exec":  [
+                                                                   "pm.test(\u0027HTTP 403, no 401\u0027, () =\u003e pm.response.to.have.status(403));"
+                                                               ]
+                                                  }
+                                   }
+                               ]
+                 },
+                 {
+                     "name":  "21 - Descarga consulta administrativa y recibe 403",
+                     "request":  {
+                                     "auth":  {
+                                                  "type":  "bearer",
+                                                  "bearer":  [
+                                                                 {
+                                                                     "key":  "token",
+                                                                     "value":  "{{descargaAccessToken}}",
+                                                                     "type":  "string"
+                                                                 }
+                                                             ]
+                                              },
+                                     "method":  "GET",
+                                     "url":  "{{baseUrl}}/api/guias?transportista={{transportista}}\u0026fecha={{fecha}}"
+                                 },
+                     "event":  [
+                                   {
+                                       "listen":  "test",
+                                       "script":  {
+                                                      "type":  "text/javascript",
+                                                      "exec":  [
+                                                                   "pm.test(\u0027HTTP 403, no 401\u0027, () =\u003e pm.response.to.have.status(403));"
+                                                               ]
+                                                  }
+                                   }
+                               ]
+                 },
+                 {
+                     "name":  "22 - Descarga intenta crear y recibe 403",
+                     "request":  {
+                                     "auth":  {
+                                                  "type":  "bearer",
+                                                  "bearer":  [
+                                                                 {
+                                                                     "key":  "token",
+                                                                     "value":  "{{descargaAccessToken}}",
+                                                                     "type":  "string"
+                                                                 }
+                                                             ]
+                                              },
+                                     "method":  "POST",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Content-Type",
+                                                        "value":  "application/json"
+                                                    }
+                                                ],
+                                     "body":  {
+                                                  "mode":  "raw",
+                                                  "raw":  "{\n  \"numeroGuia\": \"B2C-NO-CREAR\",\n  \"transportista\": \"{{transportista}}\",\n  \"fecha\": \"{{fecha}}\",\n  \"destinatario\": \"Prueba autorizacion\",\n  \"direccionDestino\": \"Direccion de prueba\",\n  \"descripcionCarga\": \"No debe persistirse\"\n}"
+                                              },
+                                     "url":  "{{baseUrl}}/api/guias"
+                                 },
+                     "event":  [
+                                   {
+                                       "listen":  "test",
+                                       "script":  {
+                                                      "type":  "text/javascript",
+                                                      "exec":  [
+                                                                   "pm.test(\u0027HTTP 403, no 401\u0027, () =\u003e pm.response.to.have.status(403));"
+                                                               ]
+                                                  }
+                                   }
+                               ]
+                 },
+                 {
+                     "name":  "23 - Descarga permitida devuelve PDF",
+                     "request":  {
+                                     "auth":  {
+                                                  "type":  "bearer",
+                                                  "bearer":  [
+                                                                 {
+                                                                     "key":  "token",
+                                                                     "value":  "{{descargaAccessToken}}",
+                                                                     "type":  "string"
+                                                                 }
+                                                             ]
+                                              },
+                                     "method":  "GET",
+                                     "url":  "{{baseUrl}}/api/guias/{{guiaId}}/descargar?transportista={{transportista}}"
+                                 },
+                     "event":  [
+                                   {
+                                       "listen":  "test",
+                                       "script":  {
+                                                      "type":  "text/javascript",
+                                                      "exec":  [
+                                                                   "pm.test(\u0027HTTP 200\u0027, () =\u003e pm.response.to.have.status(200));",
+                                                                   "pm.test(\u0027PDF\u0027, () =\u003e pm.expect(pm.response.headers.get(\u0027Content-Type\u0027)).to.include(\u0027application/pdf\u0027));",
+                                                                   "pm.test(\u0027attachment\u0027, () =\u003e pm.expect(pm.response.headers.get(\u0027Content-Disposition\u0027)).to.include(\u0027attachment\u0027));"
+                                                               ]
+                                                  }
+                                   }
+                               ]
+                 }
+             ]
+}

@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.amqp.AmqpException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -21,9 +22,19 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage());
     }
 
+    @ExceptionHandler(SimulacionErrorDeshabilitadaException.class)
+    public ResponseEntity<Map<String, Object>> handleSimulationDisabled(SimulacionErrorDeshabilitadaException ex) {
+        return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage());
+    }
+
     @ExceptionHandler({OperacionGuiaException.class})
     public ResponseEntity<Map<String, Object>> handleStorageError(RuntimeException ex) {
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+    }
+
+    @ExceptionHandler(AmqpException.class)
+    public ResponseEntity<Map<String, Object>> handleBrokerUnavailable(AmqpException ex) {
+        return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, "RabbitMQ no esta disponible para publicar o consultar");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

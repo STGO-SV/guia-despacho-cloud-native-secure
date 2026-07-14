@@ -6,6 +6,8 @@ import com.duoc.guia_despacho.dto.GuiaDespachoResponse;
 import com.duoc.guia_despacho.exception.GuiaNoEncontradaException;
 import com.duoc.guia_despacho.exception.OperacionGuiaException;
 import com.duoc.guia_despacho.exception.PermisoDenegadoException;
+import com.duoc.guia_despacho.exception.SimulacionErrorDeshabilitadaException;
+import com.duoc.guia_despacho.messaging.GuiaEventoPublisher;
 import com.duoc.guia_despacho.model.GuiaDespacho;
 import com.duoc.guia_despacho.repository.GuiaDespachoRepository;
 import com.lowagie.text.Document;
@@ -19,6 +21,8 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -41,12 +45,19 @@ public class GuiaDespachoService {
 
     private final GuiaDespachoRepository guiaRepository;
     private final S3Client s3Client;
+    private final GuiaEventoPublisher eventoPublisher;
 
     @Value("${app.storage.efs-path}")
     private String efsPath;
 
     @Value("${app.aws.s3.bucket}")
     private String bucketName;
+
+    @Value("${app.aws.s3.auto-upload}")
+    private boolean autoUploadS3;
+
+    @Value("${app.rabbit.error-simulation-enabled}")
+    private boolean errorSimulationEnabled;
 
     @Transactional
     public GuiaDespachoResponse crearGuia(CrearGuiaRequest request) {
@@ -62,7 +73,12 @@ public class GuiaDespachoService {
 
         guia = guiaRepository.save(guia);
         generarPdf(guia);
-        return GuiaDespachoResponse.fromEntity(guiaRepository.save(guia));
+        if (autoUploadS3) {
+            subirArchivoAS3(guia);
+        }
+        guia = guiaRepository.save(guia);
+        eventoPublisher.publicar(guia, false);
+        return GuiaDespachoResponse.fromEntity(guia);
     }
 
     @Transactional
@@ -77,8 +93,10 @@ public class GuiaDespachoService {
         GuiaDespacho guia = buscarGuia(id);
         validarTransportista(guia, transportista);
 
-        Path archivoLocal = Path.of(guia.getRutaEfs());
-        if (Files.exists(archivoLocal)) {
+        Path archivoLocal = guia.getRutaEfs() == null || guia.getRutaEfs().isBlank()
+                ? null
+                : Path.of(guia.getRutaEfs());
+        if (archivoLocal != null && Files.exists(archivoLocal)) {
             try {
                 return Files.readAllBytes(archivoLocal);
             } catch (IOException ex) {
@@ -135,6 +153,19 @@ public class GuiaDespachoService {
                 .stream()
                 .map(GuiaDespachoResponse::fromEntity)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public GuiaDespachoResponse obtenerGuia(Long id) {
+        return GuiaDespachoResponse.fromEntity(buscarGuia(id));
+    }
+
+    @Transactional(readOnly = true)
+    public UUID publicarProcesamiento(Long id, boolean simularError) {
+        if (simularError && !errorSimulationEnabled) {
+            throw new SimulacionErrorDeshabilitadaException();
+        }
+        return eventoPublisher.publicar(buscarGuia(id), simularError);
     }
 
     private GuiaDespacho buscarGuia(Long id) {
@@ -227,8 +258,12 @@ public class GuiaDespachoService {
     }
 
     private String construirS3Key(GuiaDespacho guia) {
-        String fecha = guia.getFecha().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
-        String transportista = guia.getTransportista().trim().replaceAll("[/\\\\]+", "-");
-        return fecha + "/" + transportista + "/guia-" + guia.getId() + ".pdf";
+        String fecha = guia.getFecha().format(DateTimeFormatter.ofPattern("yyyy/MM"));
+        String transportista = guia.getTransportista()
+                .trim()
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9._-]+", "-")
+                .replaceAll("^-|-$", "");
+        return "guias/" + transportista + "/" + fecha + "/guia-" + guia.getId() + ".pdf";
     }
 }

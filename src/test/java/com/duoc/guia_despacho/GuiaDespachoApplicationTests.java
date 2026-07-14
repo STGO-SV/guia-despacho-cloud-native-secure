@@ -11,7 +11,9 @@ import org.springframework.test.context.TestPropertySource;
 		"spring.security.oauth2.resourceserver.jwt.issuer-uri=https://login.example.com/test/v2.0/",
 		"app.security.jwk-set-uri=https://login.example.com/test/discovery/v2.0/keys",
 		"app.security.audience=cliente-test",
-		"app.security.roles-claim=roles"
+		"app.security.roles-claim=roles",
+		"spring.rabbitmq.listener.simple.auto-startup=false",
+		"management.health.rabbit.enabled=false"
 })
 class GuiaDespachoApplicationTests {
 

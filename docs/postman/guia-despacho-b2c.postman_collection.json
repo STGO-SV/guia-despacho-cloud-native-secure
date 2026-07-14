@@ -1,0 +1,76 @@
+{
+  "info": {
+    "name": "Guia de despacho - B2C real",
+    "description": "Coleccion sin secretos para validar Azure AD B2C contra la API local.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "gestionAccessToken", "value": "" },
+    { "key": "descargaAccessToken", "value": "" },
+    { "key": "guiaId", "value": "1" },
+    { "key": "eventoId", "value": "" },
+    { "key": "transportista", "value": "Transportes Norte" },
+    { "key": "fecha", "value": "2026-07-13" },
+    { "key": "tenant", "value": "" },
+    { "key": "tenantId", "value": "" },
+    { "key": "policy", "value": "B2C_1_guias_signupsignin" },
+    { "key": "clientId", "value": "" },
+    { "key": "apiClientId", "value": "" },
+    { "key": "scope", "value": "" },
+    { "key": "redirectUri", "value": "https://oauth.pstmn.io/v1/callback" }
+  ],
+  "item": [
+    {
+      "name": "00 - Health publico",
+      "request": { "method": "GET", "url": "{{baseUrl}}/actuator/health" },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('HTTP 200', () => pm.response.to.have.status(200));", "pm.test('status UP', () => pm.expect(pm.response.json().status).to.eql('UP'));" ] } }]
+    },
+    {
+      "name": "01 - Sin token devuelve 401",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/guias/{{guiaId}}" },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('HTTP 401', () => pm.response.to.have.status(401));" ] } }]
+    },
+    {
+      "name": "02 - Token malformado devuelve 401",
+      "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer token-malformado" }], "url": "{{baseUrl}}/api/guias/{{guiaId}}" },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('HTTP 401', () => pm.response.to.have.status(401));" ] } }]
+    },
+    {
+      "name": "10 - Gestion consulta permitida",
+      "request": { "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{gestionAccessToken}}", "type": "string" }] }, "method": "GET", "url": "{{baseUrl}}/api/guias?transportista={{transportista}}&fecha={{fecha}}" },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('HTTP 200', () => pm.response.to.have.status(200));" ] } }]
+    },
+    {
+      "name": "11 - Gestion procesa guia y devuelve 202",
+      "request": { "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{gestionAccessToken}}", "type": "string" }] }, "method": "POST", "url": "{{baseUrl}}/api/procesamiento/guias/{{guiaId}}" },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('HTTP 202', () => pm.response.to.have.status(202));", "const body = pm.response.json();", "pm.expect(body.eventoId).to.be.a('string').and.not.empty;", "pm.collectionVariables.set('eventoId', body.eventoId);" ] } }]
+    },
+    {
+      "name": "20 - Descarga intenta procesar y recibe 403",
+      "request": { "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{descargaAccessToken}}", "type": "string" }] }, "method": "POST", "url": "{{baseUrl}}/api/procesamiento/guias/{{guiaId}}" },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('HTTP 403, no 401', () => pm.response.to.have.status(403));" ] } }]
+    },
+    {
+      "name": "21 - Descarga consulta administrativa y recibe 403",
+      "request": { "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{descargaAccessToken}}", "type": "string" }] }, "method": "GET", "url": "{{baseUrl}}/api/guias?transportista={{transportista}}&fecha={{fecha}}" },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('HTTP 403, no 401', () => pm.response.to.have.status(403));" ] } }]
+    },
+    {
+      "name": "22 - Descarga intenta crear y recibe 403",
+      "request": {
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{descargaAccessToken}}", "type": "string" }] },
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"numeroGuia\": \"B2C-NO-CREAR\",\n  \"transportista\": \"{{transportista}}\",\n  \"fecha\": \"{{fecha}}\",\n  \"destinatario\": \"Prueba autorizacion\",\n  \"direccionDestino\": \"Direccion de prueba\",\n  \"descripcionCarga\": \"No debe persistirse\"\n}" },
+        "url": "{{baseUrl}}/api/guias"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('HTTP 403, no 401', () => pm.response.to.have.status(403));" ] } }]
+    },
+    {
+      "name": "23 - Descarga permitida devuelve PDF",
+      "request": { "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{descargaAccessToken}}", "type": "string" }] }, "method": "GET", "url": "{{baseUrl}}/api/guias/{{guiaId}}/descargar?transportista={{transportista}}" },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('HTTP 200', () => pm.response.to.have.status(200));", "pm.test('PDF', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf'));", "pm.test('attachment', () => pm.expect(pm.response.headers.get('Content-Disposition')).to.include('attachment'));" ] } }]
+    }
+  ]
+}

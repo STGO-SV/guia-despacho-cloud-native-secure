@@ -1,0 +1,12 @@
+.git
+.github
+.idea
+.agents
+target
+efs
+efs-docker
+data
+.env
+*.log
+Exp3_S8_MinimarketPlus
+https-

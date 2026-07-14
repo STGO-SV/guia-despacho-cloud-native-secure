@@ -23,6 +23,16 @@
 hs_err_pid*
 replay_pid*
 
+# Maven, IDE y artefactos locales
+target/
+.idea/
+*.iml
+efs/
+efs-local/
+data/
+Exp3_S8_MinimarketPlus/
+https-/
+
 # Environment variables
 .env
 .env.*
