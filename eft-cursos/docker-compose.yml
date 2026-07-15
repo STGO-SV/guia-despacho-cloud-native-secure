@@ -1,0 +1,90 @@
+services:
+  rabbitmq:
+    image: rabbitmq:4.1-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-eft}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-eft-local}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbit-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [eft-network]
+
+  cursos-service:
+    build:
+      context: .
+      dockerfile: cursos-service/Dockerfile
+    environment: &common-security
+      AZURE_ISSUER_URI: ${AZURE_ISSUER_URI:-https://tenant-ficticio.b2clogin.com/tenant-id/v2.0/}
+      AZURE_JWK_SET_URI: ${AZURE_JWK_SET_URI:-https://tenant-ficticio.b2clogin.com/tenant.onmicrosoft.com/B2C_1_flujo/discovery/v2.0/keys}
+      AZURE_CLIENT_ID: ${AZURE_CLIENT_ID:-00000000-0000-0000-0000-000000000000}
+      AZURE_ROLES_CLAIM: ${AZURE_ROLES_CLAIM:-extension_RolGuia}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-eft-cursos-materiales-demo}
+      AWS_S3_UPLOAD_ENABLED: "false"
+    ports: ["8081:8081"]
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks: [eft-network]
+
+  inscripciones-service:
+    build:
+      context: .
+      dockerfile: inscripciones-service/Dockerfile
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      <<: *common-security
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-eft}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-eft-local}
+    ports: ["8082:8082"]
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8082/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks: [eft-network]
+
+  bff-service:
+    build:
+      context: .
+      dockerfile: bff-service/Dockerfile
+    depends_on:
+      cursos-service:
+        condition: service_healthy
+      inscripciones-service:
+        condition: service_healthy
+    environment:
+      <<: *common-security
+      CURSOS_SERVICE_URL: http://cursos-service:8081
+      INSCRIPCIONES_SERVICE_URL: http://inscripciones-service:8082
+    ports: ["8080:8080"]
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks: [eft-network]
+
+networks:
+  eft-network:
+    driver: bridge
+
+volumes:
+  rabbit-data:
+
