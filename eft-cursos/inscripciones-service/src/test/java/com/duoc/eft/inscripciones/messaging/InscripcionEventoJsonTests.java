@@ -11,8 +11,7 @@ import org.junit.jupiter.api.Test;
 class InscripcionEventoJsonTests {
     @Test void esSerializable() throws Exception {
         ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
-        InscripcionCreadaEvento evento = new InscripcionCreadaEvento(UUID.randomUUID(), 1L, 2L, "e", Instant.now());
+        InscripcionCreadaEvento evento = new InscripcionCreadaEvento(UUID.randomUUID(), 1L, 2L, "e", Instant.now(), false);
         assertEquals(evento.eventoId(), mapper.readValue(mapper.writeValueAsBytes(evento), InscripcionCreadaEvento.class).eventoId());
     }
 }
-

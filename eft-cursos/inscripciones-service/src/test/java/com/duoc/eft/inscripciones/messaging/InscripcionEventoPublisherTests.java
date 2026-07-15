@@ -17,7 +17,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 class InscripcionEventoPublisherTests {
     @Mock RabbitTemplate template;
     @Test void publicaEnExchangeYRoutingKey() {
-        InscripcionCreadaEvento evento = new InscripcionCreadaEvento(UUID.randomUUID(), 1L, 2L, "e", Instant.now());
+        InscripcionCreadaEvento evento = new InscripcionCreadaEvento(UUID.randomUUID(), 1L, 2L, "e", Instant.now(), false);
         new InscripcionEventoPublisher(template, "cursos.exchange", "inscripcion.creada").publicar(evento);
         verify(template).convertAndSend(eq("cursos.exchange"), eq("inscripcion.creada"), eq(evento),
                 any(MessagePostProcessor.class));

@@ -5,5 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface InscripcionProcesadaRepository extends JpaRepository<InscripcionProcesada, Long> {
     boolean existsByEventoId(String eventoId);
+    long countByEventoId(String eventoId);
 }
-

@@ -5,9 +5,12 @@ import com.duoc.eft.inscripciones.dto.InscripcionResponse;
 import com.duoc.eft.inscripciones.messaging.InscripcionCreadaEvento;
 import com.duoc.eft.inscripciones.service.ConsumoManualService;
 import com.duoc.eft.inscripciones.service.InscripcionService;
+import com.duoc.eft.inscripciones.service.InscripcionProcesamientoService;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,8 +24,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class InscripcionController {
     private final InscripcionService service;
     private final ConsumoManualService consumoManual;
-    public InscripcionController(InscripcionService service, ConsumoManualService consumoManual) {
-        this.service = service; this.consumoManual = consumoManual;
+    private final InscripcionProcesamientoService procesamiento;
+    public InscripcionController(InscripcionService service, ConsumoManualService consumoManual,
+            InscripcionProcesamientoService procesamiento) {
+        this.service = service; this.consumoManual = consumoManual; this.procesamiento = procesamiento;
     }
     @PostMapping ResponseEntity<InscripcionResponse> crear(@Valid @RequestBody InscripcionRequest request) {
         InscripcionResponse response = service.crear(request);
@@ -36,5 +41,14 @@ public class InscripcionController {
     @PostMapping("/consumir-siguiente") ResponseEntity<InscripcionCreadaEvento> consumirSiguiente() {
         return consumoManual.consumirSiguiente().map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+    @PostMapping("/republicar-evento") ResponseEntity<Void> republicar(
+            @RequestBody InscripcionCreadaEvento evento) {
+        service.republicar(evento);
+        return ResponseEntity.accepted().build();
+    }
+    @GetMapping("/procesadas/{eventoId}") Map<String, Object> procesadas(@PathVariable UUID eventoId) {
+        long cantidad = procesamiento.cantidadProcesada(eventoId.toString());
+        return Map.of("eventoId", eventoId, "cantidad", cantidad, "idempotente", cantidad <= 1);
     }
 }

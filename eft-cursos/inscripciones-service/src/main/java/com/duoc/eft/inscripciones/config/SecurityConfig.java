@@ -29,6 +29,8 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/inscripciones").hasAnyRole("ESTUDIANTE", "DESCARGA_GUIAS")
                         .requestMatchers(HttpMethod.POST, "/api/inscripciones/consumir-siguiente").hasAnyRole("INSTRUCTOR", "GESTION_GUIAS")
+                        .requestMatchers(HttpMethod.POST, "/api/inscripciones/republicar-evento").hasAnyRole("INSTRUCTOR", "GESTION_GUIAS")
+                        .requestMatchers(HttpMethod.GET, "/api/inscripciones/procesadas/*").hasAnyRole("INSTRUCTOR", "GESTION_GUIAS")
                         .requestMatchers(HttpMethod.GET, "/api/inscripciones/curso/*", "/api/inscripciones").hasAnyRole("INSTRUCTOR", "GESTION_GUIAS")
                         .requestMatchers(HttpMethod.GET, "/api/inscripciones/*").hasAnyRole("ESTUDIANTE", "INSTRUCTOR", "DESCARGA_GUIAS", "GESTION_GUIAS")
                         .anyRequest().denyAll())

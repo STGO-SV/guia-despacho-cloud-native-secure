@@ -16,7 +16,17 @@ public class JwtRolesConverter implements Converter<Jwt, Collection<GrantedAutho
         Set<GrantedAuthority> result = new LinkedHashSet<>();
         if (value instanceof String role) add(result, role);
         else if (value instanceof Collection<?> roles) roles.forEach(role -> add(result, String.valueOf(role)));
+        addLocalDemoRole(result, jwt.getSubject());
+        addLocalDemoTokenRole(result, jwt.getTokenValue());
         return result;
+    }
+    private void addLocalDemoRole(Set<GrantedAuthority> result, String subject) {
+        if ("local-instructor".equals(subject)) add(result, "INSTRUCTOR");
+        else if ("local-estudiante".equals(subject)) add(result, "ESTUDIANTE");
+    }
+    private void addLocalDemoTokenRole(Set<GrantedAuthority> result, String token) {
+        if ("demo-instructor".equals(token)) add(result, "INSTRUCTOR");
+        else if ("demo-estudiante".equals(token)) add(result, "ESTUDIANTE");
     }
     private void add(Set<GrantedAuthority> result, String role) {
         String normalized = role.trim();
@@ -24,4 +34,3 @@ public class JwtRolesConverter implements Converter<Jwt, Collection<GrantedAutho
         if (!normalized.isBlank()) result.add(new SimpleGrantedAuthority("ROLE_" + normalized));
     }
 }
-

@@ -1,46 +1,41 @@
 # Arquitectura académica EFT de cursos
 
-## Estrategia
+## Alcance
 
-La adaptación vive en `eft-cursos/` y no modifica la aplicación existente de guías. Es un proyecto Maven multimódulo con tres aplicaciones Spring Boot independientes.
+La adaptación está aislada en `eft-cursos/` y no modifica la aplicación heredada de guías. Es un reactor Maven con tres aplicaciones Spring Boot y RabbitMQ local.
 
-| Servicio | Puerto | Responsabilidad |
+| Componente | Puerto | Responsabilidad |
 | --- | ---: | --- |
-| `bff-service` | 8080 | Entrada única y orquestación HTTP hacia los servicios internos. |
-| `cursos-service` | 8081 | CRUD de cursos y preparación de materiales S3. |
-| `inscripciones-service` | 8082 | Inscripciones, publicación y consumo RabbitMQ. |
-| RabbitMQ | 5672 / 15672 | Mensajería y consola académica. |
+| `bff-service` | 8080 | Entrada HTTP y propagación de `Authorization`. |
+| `cursos-service` | 8081 | CRUD de cursos y preparación académica de claves S3. |
+| `inscripciones-service` | 8082 | Inscripciones, productor, listener, consumo explícito e idempotencia. |
+| RabbitMQ | 5672 / 15672 | Mensajería y Management local. |
 
-Flujo principal:
+Flujo HTTP: `Cliente -> BFF -> cursos-service / inscripciones-service -> H2`.
 
-`Cliente -> BFF -> cursos-service / inscripciones-service -> H2`
+Flujo asíncrono: `POST inscripción -> publisher Java -> cursos.exchange -> listener Java -> INSCRIPCION_PROCESADA`.
 
-Flujo asíncrono:
+## Ejecución verificada
 
-`BFF -> POST inscripciones -> publisher Java -> RabbitMQ -> listener Java -> INSCRIPCION_PROCESADA`
-
-## Ejecución local
-
-Desde `eft-cursos/`:
+Desde la raíz del repositorio:
 
 ```powershell
-..\mvnw.cmd clean verify
-docker compose config
-docker compose up -d --build
+.\mvnw.cmd -f eft-cursos\pom.xml clean verify
+docker compose -f eft-cursos\docker-compose.yml config
+docker compose -f eft-cursos\docker-compose.yml up -d --build
+docker compose -f eft-cursos\docker-compose.yml ps
 ```
 
-Health checks:
+El 15-07-2026 se verificaron los cuatro contenedores saludables y los healthchecks públicos con HTTP 200 / `UP` en 8080, 8081 y 8082.
 
-- `http://localhost:8080/actuator/health`
-- `http://localhost:8081/actuator/health`
-- `http://localhost:8082/actuator/health`
+## Seguridad local controlada
 
-## Limitaciones de esta fase
+Spring Security permanece activo. Sin token, los endpoints de negocio devuelven 401 JSON; Actuator health es público. Compose habilita solo para esta demostración el decodificador académico mediante `APP_SECURITY_DEMO_ENABLED=true`, con tokens locales deterministas de estudiante e instructor. La configuración normal mantiene issuer, audiencia, JWK y claim de roles Azure parametrizados; no se generaron tokens reales.
 
-- No existe frontend.
-- No existe API Manager.
-- No hay despliegue cloud.
-- Se usa H2 local, no Oracle real.
-- No se crean usuarios ni roles nuevos en Azure.
-- La aplicación original de guías permanece intacta.
+## Limitaciones reales
 
+- No hay frontend, API Manager ni despliegue cloud.
+- H2 es en memoria: recrear `inscripciones-service`, paso obligatorio de la evidencia manual, reinicia sus tablas locales.
+- La integración S3 conserva `AWS_S3_UPLOAD_ENABLED=false`; solo prepara la clave.
+- Los datos durables de RabbitMQ usan el volumen nombrado `rabbit-data`, que no se eliminó.
+- La aplicación heredada permanece intacta.

@@ -18,7 +18,7 @@ class ConsumoManualServiceTests {
     @Mock RabbitTemplate template;
     @Mock InscripcionProcesamientoService procesamiento;
     @Test void consumeYProcesaEvento() {
-        InscripcionCreadaEvento evento = new InscripcionCreadaEvento(UUID.randomUUID(), 1L, 2L, "e", Instant.now());
+        InscripcionCreadaEvento evento = new InscripcionCreadaEvento(UUID.randomUUID(), 1L, 2L, "e", Instant.now(), false);
         when(template.receiveAndConvert("cola")).thenReturn(evento);
         assertTrue(new ConsumoManualService(template, procesamiento, "cola").consumirSiguiente().isPresent());
         verify(procesamiento).procesar(evento);

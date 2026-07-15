@@ -25,6 +25,7 @@ services:
       AZURE_JWK_SET_URI: ${AZURE_JWK_SET_URI:-https://tenant-ficticio.b2clogin.com/tenant.onmicrosoft.com/B2C_1_flujo/discovery/v2.0/keys}
       AZURE_CLIENT_ID: ${AZURE_CLIENT_ID:-00000000-0000-0000-0000-000000000000}
       AZURE_ROLES_CLAIM: ${AZURE_ROLES_CLAIM:-extension_RolGuia}
+      APP_SECURITY_DEMO_ENABLED: "true"
       AWS_REGION: ${AWS_REGION:-us-east-1}
       AWS_S3_BUCKET: ${AWS_S3_BUCKET:-eft-cursos-materiales-demo}
       AWS_S3_UPLOAD_ENABLED: "false"
@@ -50,6 +51,7 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-eft}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-eft-local}
+      RABBITMQ_LISTENER_AUTO_STARTUP: ${RABBITMQ_LISTENER_AUTO_STARTUP:-true}
     ports: ["8082:8082"]
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8082/actuator/health"]
@@ -87,4 +89,3 @@ networks:
 
 volumes:
   rabbit-data:
-

@@ -21,8 +21,7 @@ class InscripcionServiceTests {
     @Test void crearPersisteYPublica() {
         when(repository.save(any())).thenAnswer(inv -> { Inscripcion i = inv.getArgument(0); i.setId(7L); return i; });
         InscripcionService service = new InscripcionService(repository, publisher);
-        assertEquals(7L, service.crear(new InscripcionRequest(3L, "estudiante-1")).id());
+        assertEquals(7L, service.crear(new InscripcionRequest(3L, "estudiante-1", false)).id());
         verify(publisher).publicar(any());
     }
 }
-

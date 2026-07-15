@@ -14,9 +14,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class InscripcionEventoConsumerTests {
     @Mock InscripcionProcesamientoService service;
     @Test void delegaProcesamiento() {
-        InscripcionCreadaEvento evento = new InscripcionCreadaEvento(UUID.randomUUID(), 1L, 2L, "e", Instant.now());
+        InscripcionCreadaEvento evento = new InscripcionCreadaEvento(UUID.randomUUID(), 1L, 2L, "e", Instant.now(), false);
         new InscripcionEventoConsumer(service).consumir(evento);
         verify(service).procesar(evento);
     }
 }
-

@@ -27,9 +27,11 @@ public class InscripcionService {
         inscripcion.setCursoId(request.cursoId()); inscripcion.setEstudianteId(request.estudianteId());
         inscripcion.setFechaInscripcion(LocalDate.now()); inscripcion.setEstado("CREADA");
         inscripcion = repository.save(inscripcion);
-        publisher.publicar(new InscripcionCreadaEvento(UUID.randomUUID(), inscripcion.getId(),
-                inscripcion.getCursoId(), inscripcion.getEstudianteId(), Instant.now()));
-        return InscripcionResponse.from(inscripcion);
+        UUID eventoId = UUID.randomUUID();
+        publisher.publicar(new InscripcionCreadaEvento(eventoId, inscripcion.getId(),
+                inscripcion.getCursoId(), inscripcion.getEstudianteId(), Instant.now(),
+                Boolean.TRUE.equals(request.simularError())));
+        return InscripcionResponse.from(inscripcion, eventoId);
     }
     @Transactional(readOnly = true)
     public List<InscripcionResponse> listar() { return repository.findAll().stream().map(InscripcionResponse::from).toList(); }
@@ -40,5 +42,6 @@ public class InscripcionService {
     public List<InscripcionResponse> porCurso(Long cursoId) {
         return repository.findByCursoId(cursoId).stream().map(InscripcionResponse::from).toList();
     }
-}
 
+    public void republicar(InscripcionCreadaEvento evento) { publisher.publicar(evento); }
+}

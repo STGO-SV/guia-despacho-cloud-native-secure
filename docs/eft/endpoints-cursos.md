@@ -8,9 +8,7 @@
 | POST | `/api/bff/cursos` | Instructor |
 | POST | `/api/bff/inscripciones` | Estudiante |
 | GET | `/api/bff/inscripciones/{id}` | Estudiante o instructor |
-| POST | `/api/bff/inscripciones/consumir` | Instructor; consumo académico explícito |
-
-El BFF propaga `Authorization` si está presente y usa `CURSOS_SERVICE_URL` e `INSCRIPCIONES_SERVICE_URL`.
+| POST | `/api/bff/inscripciones/consumir` | Instructor; consumo explícito |
 
 ## Cursos (`8081`)
 
@@ -21,9 +19,7 @@ El BFF propaga `Authorization` si está presente y usa `CURSOS_SERVICE_URL` e `I
 | GET | `/api/cursos/{id}` | Obtener curso |
 | PUT | `/api/cursos/{id}` | Actualizar curso |
 | DELETE | `/api/cursos/{id}` | Eliminar curso |
-| POST | `/api/cursos/{id}/material` | Preparar/subir material |
-
-JSON mínimo:
+| POST | `/api/cursos/{id}/material` | Preparar/subir material; localmente no sube a S3 |
 
 ```json
 {"titulo":"Cloud Native","descripcion":"Curso EFT","instructor":"Docente","estado":"ACTIVO"}
@@ -33,12 +29,22 @@ JSON mínimo:
 
 | Método | Ruta | Uso |
 | --- | --- | --- |
-| POST | `/api/inscripciones` | Crear y publicar evento |
+| POST | `/api/inscripciones` | Crear y publicar evento; acepta `simularError` opcional |
 | GET | `/api/inscripciones` | Listar |
 | GET | `/api/inscripciones/{id}` | Consultar |
 | GET | `/api/inscripciones/curso/{cursoId}` | Consultar por curso |
 | POST | `/api/inscripciones/consumir-siguiente` | Consumir explícitamente un mensaje |
+| POST | `/api/inscripciones/republicar-evento` | Republicar el mismo evento para evidencia de idempotencia |
+| GET | `/api/inscripciones/procesadas/{eventoId}` | Consultar cantidad persistida e idempotencia |
+
+Flujo normal:
 
 ```json
-{"cursoId":1,"estudianteId":"estudiante-001"}
+{"cursoId":2,"estudianteId":"estudiante-001"}
+```
+
+Fallo académico controlado:
+
+```json
+{"cursoId":2,"estudianteId":"estudiante-dlq","simularError":true}
 ```

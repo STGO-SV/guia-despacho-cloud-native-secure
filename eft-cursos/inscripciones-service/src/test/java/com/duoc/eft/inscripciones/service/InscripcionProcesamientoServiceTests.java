@@ -1,5 +1,6 @@
 package com.duoc.eft.inscripciones.service;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -29,8 +30,14 @@ class InscripcionProcesamientoServiceTests {
         new InscripcionProcesamientoService(repository).procesar(evento(id));
         verify(repository).save(any());
     }
+    @Test void falloControladoInterrumpeProcesamientoSinPersistir() {
+        InscripcionCreadaEvento evento = new InscripcionCreadaEvento(UUID.randomUUID(), 1L, 2L,
+                "estudiante", Instant.now(), true);
+        assertThrows(IllegalStateException.class,
+                () -> new InscripcionProcesamientoService(repository).procesar(evento));
+        verify(repository, never()).save(any());
+    }
     private InscripcionCreadaEvento evento(UUID id) {
-        return new InscripcionCreadaEvento(id, 1L, 2L, "estudiante", Instant.now());
+        return new InscripcionCreadaEvento(id, 1L, 2L, "estudiante", Instant.now(), false);
     }
 }
-
