@@ -13,7 +13,10 @@
 9. Listener desactivado en recreación exclusiva de inscripciones: mensaje pendiente con cero consumidores.
 10. Endpoint consumidor BFF: evento devuelto, persistido y retirado de la cola.
 11. Fallo controlado: tres intentos, backoff finito, `x-death`, cola principal vacía y un mensaje preservado en DLQ.
-12. Maven Wrapper: 19 pruebas, 0 fallos, 0 errores, 0 omitidas y `BUILD SUCCESS`.
+12. Maven Wrapper: 20 pruebas, 0 fallos, 0 errores, 0 omitidas y `BUILD SUCCESS`.
+13. Frontend Vite: build de producción exitoso, `dist/config.js` externo y página local en puerto 5173.
+14. Frontend: cuatro pruebas sobre roles, Authorization, 401 y 403; `npm audit` con cero vulnerabilidades.
+15. CORS BFF: origen local aceptado y origen alternativo rechazado por prueba automatizada.
 
 ## Comandos principales
 
@@ -23,6 +26,11 @@ docker compose -f eft-cursos\docker-compose.yml config
 docker compose -f eft-cursos\docker-compose.yml up -d --build
 $env:RABBITMQ_LISTENER_AUTO_STARTUP='false'
 docker compose -f eft-cursos\docker-compose.yml up -d --no-deps --force-recreate inscripciones-service
+cd eft-cursos\frontend
+npm install
+npm run test
+npm run build
+npm run serve
 ```
 
 ## Evidencias futuras o humanas
@@ -31,5 +39,6 @@ docker compose -f eft-cursos\docker-compose.yml up -d --no-deps --force-recreate
 - Crear el Word oficial y video Kaltura cuando corresponda.
 - Commit y push manuales mediante GitHub Desktop.
 - Integraciones reales Azure, AWS y API Manager quedan fuera de esta validación académica local.
+- Completar `frontend/public/config.js`, registrar `http://localhost:5173` como redirect URI SPA y realizar login/logout con cuentas B2C de ambos roles.
 
 No registrar tokens, correos, tenant IDs, account IDs ni credenciales en evidencias.

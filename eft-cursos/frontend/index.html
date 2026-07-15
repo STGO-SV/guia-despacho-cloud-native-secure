@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EFT Cursos · Demo B2C</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header>
+      <div>
+        <p class="eyebrow">Desarrollo Cloud Native · EFT</p>
+        <h1>Portal académico de cursos</h1>
+        <p class="subtitle">Demostración local de Azure AD B2C, PKCE, roles y BFF.</p>
+      </div>
+      <div class="session-actions">
+        <button id="loginButton">Iniciar sesión</button>
+        <button id="logoutButton" class="secondary" disabled>Cerrar sesión</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="status-grid" aria-label="Estado de sesión">
+        <article><span>Autenticación</span><strong id="authStatus">No autenticado</strong></article>
+        <article><span>Usuario</span><strong id="userName">—</strong></article>
+        <article><span>Rol detectado</span><strong id="roleStatus">—</strong></article>
+      </section>
+
+      <p id="configurationNotice" class="notice" hidden></p>
+
+      <section class="card">
+        <div class="section-heading">
+          <div><p class="eyebrow">Todos los usuarios</p><h2>Cursos disponibles</h2></div>
+          <button id="loadCoursesButton" disabled>Actualizar listado</button>
+        </div>
+        <div id="coursesList" class="courses-list"><p class="empty">Inicia sesión para consultar cursos.</p></div>
+      </section>
+
+      <div class="forms-grid">
+        <section class="card">
+          <p class="eyebrow">Instructor</p>
+          <h2>Crear curso</h2>
+          <form id="courseForm">
+            <label>Título<input name="titulo" required maxlength="160" /></label>
+            <label>Descripción<textarea name="descripcion" required maxlength="1000"></textarea></label>
+            <label>Instructor<input name="instructor" required maxlength="160" /></label>
+            <label>Estado<select name="estado"><option>ACTIVO</option><option>INACTIVO</option></select></label>
+            <button type="submit" disabled>Crear curso</button>
+          </form>
+        </section>
+
+        <section class="card">
+          <p class="eyebrow">Estudiante</p>
+          <h2>Inscribirse</h2>
+          <form id="enrollmentForm">
+            <label>ID del curso<input name="cursoId" required type="number" min="1" /></label>
+            <label>Identificador estudiante<input name="estudianteId" required /></label>
+            <button type="submit" disabled>Crear inscripción</button>
+          </form>
+        </section>
+      </div>
+
+      <section class="card forbidden-card">
+        <div><p class="eyebrow">Evidencia de autorización</p><h2>Probar operación prohibida</h2>
+          <p id="forbiddenDescription">La acción se habilita después del login.</p></div>
+        <button id="forbiddenButton" class="danger" disabled>Ejecutar y esperar 403</button>
+      </section>
+
+      <section class="card response-card" aria-live="polite">
+        <div class="section-heading"><div><p class="eyebrow">Trazabilidad sin tokens</p><h2>Respuesta HTTP</h2></div>
+          <strong id="httpStatus" class="http-status">Sin solicitudes</strong></div>
+        <pre id="httpResponse">La respuesta de la próxima operación aparecerá aquí.</pre>
+      </section>
+    </main>
+    <!-- vite-ignore -->
+    <script src="/config.js"></script>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

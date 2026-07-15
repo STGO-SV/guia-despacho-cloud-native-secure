@@ -25,6 +25,8 @@ replay_pid*
 
 # Maven, IDE y artefactos locales
 target/
+node_modules/
+dist/
 .idea/
 *.iml
 efs/

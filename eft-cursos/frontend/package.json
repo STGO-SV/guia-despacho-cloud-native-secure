@@ -1,0 +1,20 @@
+{
+  "name": "eft-cursos-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5173",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 5173",
+    "serve": "node serve.mjs",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@azure/msal-browser": "4.30.0"
+  },
+  "devDependencies": {
+    "vite": "7.3.6",
+    "vitest": "3.2.7"
+  }
+}
