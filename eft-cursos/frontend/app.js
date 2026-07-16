@@ -3,7 +3,7 @@ import {
   InteractionRequiredAuthError,
   PublicClientApplication
 } from "@azure/msal-browser";
-import { buildAuthorizationHeader, describeHttpError, detectRole } from "./auth-utils.js";
+import { buildAuthorizationHeader, buildEnrollmentPayload, describeHttpError, sessionView } from "./auth-utils.js";
 
 const config = window.EFT_CONFIG ?? {};
 const required = ["B2C_CLIENT_ID", "B2C_AUTHORITY", "B2C_KNOWN_AUTHORITY", "B2C_REDIRECT_URI", "B2C_SCOPE"];
@@ -26,6 +26,10 @@ const logoutButton = el("logoutButton");
 const loadCoursesButton = el("loadCoursesButton");
 const courseForm = el("courseForm");
 const enrollmentForm = el("enrollmentForm");
+const enrollmentCourseSelect = el("enrollmentCourseSelect");
+const instructorPanel = el("instructorPanel");
+const studentPanel = el("studentPanel");
+const authorizationEvidence = el("authorizationEvidence");
 const forbiddenButton = el("forbiddenButton");
 let currentRole = { code: "SIN_ROL", label: "—" };
 
@@ -44,15 +48,27 @@ async function initialize() {
 
 function renderSession() {
   const account = msal.getActiveAccount();
-  currentRole = account ? detectRole(account.idTokenClaims) : { code: "SIN_ROL", label: "—" };
-  el("authStatus").textContent = account ? "Autenticado" : "No autenticado";
-  el("userName").textContent = account?.name || account?.username || "—";
+  const view = sessionView(account);
+  currentRole = view.role;
+  el("authStatus").textContent = view.authenticated ? "Autenticado" : "No autenticado";
+  el("userName").textContent = view.userName;
   el("roleStatus").textContent = currentRole.label;
-  logoutButton.disabled = !account;
-  loadCoursesButton.disabled = !account;
-  courseForm.querySelector("button").disabled = currentRole.label !== "Instructor";
-  enrollmentForm.querySelector("button").disabled = currentRole.label !== "Estudiante";
-  forbiddenButton.disabled = !account || currentRole.code === "SIN_ROL";
+  loginButton.hidden = !view.showLogin;
+  loginButton.disabled = missing.length > 0;
+  logoutButton.hidden = !view.showLogout;
+  logoutButton.disabled = !view.authenticated;
+  instructorPanel.hidden = !view.showInstructorPanel;
+  studentPanel.hidden = !view.showStudentPanel;
+  authorizationEvidence.hidden = !view.showAuthorizationEvidence;
+  loadCoursesButton.disabled = !view.authenticated;
+  courseForm.querySelector("button").disabled = !view.showInstructorPanel;
+  enrollmentCourseSelect.disabled = !view.showStudentPanel || enrollmentCourseSelect.options.length <= 1;
+  enrollmentForm.querySelector("button").disabled = enrollmentCourseSelect.disabled;
+  forbiddenButton.disabled = !view.authenticated || currentRole.code === "SIN_ROL";
+  if (!view.authenticated) {
+    el("coursesList").innerHTML = '<p class="empty">Inicia sesión para consultar cursos.</p>';
+    populateEnrollmentCourses([]);
+  }
   el("forbiddenDescription").textContent = currentRole.label === "Estudiante"
     ? "Intentará crear un curso con rol estudiante; el resultado esperado es 403."
     : currentRole.label === "Instructor"
@@ -61,8 +77,8 @@ function renderSession() {
 }
 
 async function login() {
-  await msal.loginPopup({ scopes: ["openid", "offline_access", ...scopes], prompt: "select_account" });
-  msal.setActiveAccount(msal.getAllAccounts()[0] ?? null);
+  const response = await msal.loginPopup({ scopes: ["openid", "offline_access", ...scopes], prompt: "select_account" });
+  msal.setActiveAccount(response.account);
   renderSession();
   await loadCourses();
 }
@@ -70,6 +86,7 @@ async function login() {
 async function logout() {
   const account = msal.getActiveAccount();
   await msal.logoutPopup({ account, postLogoutRedirectUri: config.B2C_REDIRECT_URI });
+  msal.setActiveAccount(null);
   renderSession();
 }
 
@@ -117,25 +134,42 @@ async function loadCourses() {
     article.querySelector("small").textContent = `ID ${course.id} · ${course.estado} · ${course.instructor}`;
     container.append(article);
   }
+  populateEnrollmentCourses(courses ?? []);
+}
+
+function populateEnrollmentCourses(courses) {
+  enrollmentCourseSelect.replaceChildren();
+  const prompt = document.createElement("option");
+  prompt.value = "";
+  prompt.textContent = courses.length ? "Selecciona un curso" : "No hay cursos disponibles";
+  enrollmentCourseSelect.append(prompt);
+  for (const course of courses) {
+    const option = document.createElement("option");
+    option.value = String(course.id);
+    option.textContent = `ID ${course.id} · ${course.titulo}`;
+    enrollmentCourseSelect.append(option);
+  }
+  const enabled = currentRole.label === "Estudiante" && courses.length > 0;
+  enrollmentCourseSelect.disabled = !enabled;
+  enrollmentForm.querySelector("button").disabled = !enabled;
 }
 
 courseForm.addEventListener("submit", async event => {
   event.preventDefault();
   const body = Object.fromEntries(new FormData(courseForm));
-  try { await api("/api/bff/cursos", { method: "POST", body: JSON.stringify(body) }); await loadCourses(); }
+  try { await api("/api/bff/cursos", { method: "POST", body: JSON.stringify(body) }); courseForm.reset(); await loadCourses(); }
   catch (error) { if (!String(error.message).startsWith("4")) showResponse(0, error.message, "Error local"); }
 });
 
 enrollmentForm.addEventListener("submit", async event => {
   event.preventDefault();
-  const body = Object.fromEntries(new FormData(enrollmentForm));
-  body.cursoId = Number(body.cursoId);
-  try { await api("/api/bff/inscripciones", { method: "POST", body: JSON.stringify(body) }); }
+  const body = buildEnrollmentPayload(new FormData(enrollmentForm).get("cursoId"));
+  try { await api("/api/bff/inscripciones", { method: "POST", body: JSON.stringify(body) }); enrollmentForm.reset(); }
   catch (error) { if (!String(error.message).startsWith("4")) showResponse(0, error.message, "Error local"); }
 });
 
 forbiddenButton.addEventListener("click", async () => {
-  const instructorAttempt = { cursoId: 1, estudianteId: "evidencia-instructor" };
+  const instructorAttempt = { cursoId: 1 };
   const studentAttempt = { titulo: "Intento prohibido", descripcion: "Debe devolver 403", instructor: "Estudiante", estado: "ACTIVO" };
   const path = currentRole.label === "Estudiante" ? "/api/bff/cursos" : "/api/bff/inscripciones";
   const body = currentRole.label === "Estudiante" ? studentAttempt : instructorAttempt;

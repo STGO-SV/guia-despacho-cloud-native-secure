@@ -3,6 +3,7 @@ package com.duoc.eft.inscripciones.service;
 import com.duoc.eft.inscripciones.dto.InscripcionRequest;
 import com.duoc.eft.inscripciones.dto.InscripcionResponse;
 import com.duoc.eft.inscripciones.exception.RecursoNoEncontradoException;
+import com.duoc.eft.inscripciones.exception.InscripcionDuplicadaException;
 import com.duoc.eft.inscripciones.messaging.InscripcionCreadaEvento;
 import com.duoc.eft.inscripciones.messaging.InscripcionEventoPublisher;
 import com.duoc.eft.inscripciones.model.Inscripcion;
@@ -12,6 +13,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -22,15 +24,25 @@ public class InscripcionService {
         this.repository = repository; this.publisher = publisher;
     }
     @Transactional
-    public InscripcionResponse crear(InscripcionRequest request) {
+    public InscripcionResponse crear(InscripcionRequest request, String authenticatedSubject) {
+        if (authenticatedSubject == null || authenticatedSubject.isBlank()) {
+            throw new IllegalArgumentException("El token autenticado no contiene sub");
+        }
+        if (repository.existsByEstudianteIdAndCursoId(authenticatedSubject, request.cursoId())) {
+            throw new InscripcionDuplicadaException();
+        }
         Inscripcion inscripcion = new Inscripcion();
-        inscripcion.setCursoId(request.cursoId()); inscripcion.setEstudianteId(request.estudianteId());
+        inscripcion.setCursoId(request.cursoId()); inscripcion.setEstudianteId(authenticatedSubject);
         inscripcion.setFechaInscripcion(LocalDate.now()); inscripcion.setEstado("CREADA");
-        inscripcion = repository.save(inscripcion);
+        try {
+            inscripcion = repository.saveAndFlush(inscripcion);
+        } catch (DataIntegrityViolationException ex) {
+            throw new InscripcionDuplicadaException(ex);
+        }
         UUID eventoId = UUID.randomUUID();
         publisher.publicar(new InscripcionCreadaEvento(eventoId, inscripcion.getId(),
                 inscripcion.getCursoId(), inscripcion.getEstudianteId(), Instant.now(),
-                Boolean.TRUE.equals(request.simularError())));
+                request.simularError()));
         return InscripcionResponse.from(inscripcion, eventoId);
     }
     @Transactional(readOnly = true)

@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -20,5 +21,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(Map.of(
                 "timestamp", Instant.now(), "status", 400, "message", "JSON de inscripcion invalido"));
     }
+    @ExceptionHandler({InscripcionDuplicadaException.class, DataIntegrityViolationException.class})
+    ResponseEntity<Map<String, Object>> conflict(Exception ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                "timestamp", Instant.now(), "status", 409,
+                "message", "El estudiante ya está inscrito en este curso"));
+    }
 }
-

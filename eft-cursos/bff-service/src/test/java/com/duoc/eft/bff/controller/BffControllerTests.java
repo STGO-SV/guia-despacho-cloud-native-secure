@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.duoc.eft.bff.client.CursosClient;
 import com.duoc.eft.bff.client.InscripcionesClient;
 import com.duoc.eft.bff.config.SecurityConfig;
+import com.duoc.eft.bff.dto.InscripcionRequest;
 import java.net.ConnectException;
 import java.time.Instant;
 import java.util.List;
@@ -54,13 +55,41 @@ class BffControllerTests {
         verify(cursos).listar("Bearer token-demo");
     }
     @Test void reenviaCreacionInscripcion() throws Exception {
-        String json = "{\"cursoId\":1,\"estudianteId\":\"e1\"}";
-        when(inscripciones.crear(json, "Bearer token-demo"))
+        String json = "{\"cursoId\":1}";
+        InscripcionRequest request = new InscripcionRequest(1L, false);
+        when(inscripciones.crear(request, "Bearer token-demo"))
                 .thenReturn(ResponseEntity.status(201).contentType(MediaType.APPLICATION_JSON).body(json));
         mvc.perform(post("/api/bff/inscripciones").header("Authorization", "Bearer token-demo")
                         .contentType(MediaType.APPLICATION_JSON).content(json))
                 .andExpect(status().isCreated());
-        verify(inscripciones).crear(json, "Bearer token-demo");
+        verify(inscripciones).crear(request, "Bearer token-demo");
+    }
+    @Test void noReenviaIdentidadControladaPorElNavegador() throws Exception {
+        String json = "{\"cursoId\":1,\"estudianteId\":\"otra-persona\"}";
+        InscripcionRequest sanitized = new InscripcionRequest(1L, false);
+        when(inscripciones.crear(sanitized, "Bearer token-demo"))
+                .thenReturn(ResponseEntity.status(201).body("{}"));
+        mvc.perform(post("/api/bff/inscripciones").header("Authorization", "Bearer token-demo")
+                        .contentType(MediaType.APPLICATION_JSON).content(json))
+                .andExpect(status().isCreated());
+        verify(inscripciones).crear(sanitized, "Bearer token-demo");
+    }
+    @Test void propaga409DeInscripcionDuplicada() throws Exception {
+        InscripcionRequest request = new InscripcionRequest(1L, false);
+        when(inscripciones.crear(request, "Bearer token-demo"))
+                .thenReturn(ResponseEntity.status(409).contentType(MediaType.APPLICATION_JSON)
+                        .body("{\"status\":409,\"message\":\"El estudiante ya está inscrito en este curso\"}"));
+
+        mvc.perform(post("/api/bff/inscripciones").header("Authorization", "Bearer token-demo")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"cursoId\":1}"))
+                .andExpect(status().isConflict())
+                .andExpect(content().json("{\"status\":409,\"message\":\"El estudiante ya está inscrito en este curso\"}"));
+    }
+    @Test void instructorNoPuedeUsarFlujoDeInscripcion() throws Exception {
+        mvc.perform(post("/api/bff/inscripciones")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_INSTRUCTOR")))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"cursoId\":1}"))
+                .andExpect(status().isForbidden());
     }
     @Test void manejaServicioNoDisponible() throws Exception {
         when(cursos.listar(null)).thenThrow(new ResourceAccessException("sin conexion", new ConnectException()));

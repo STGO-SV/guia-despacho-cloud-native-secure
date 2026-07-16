@@ -1,4 +1,4 @@
-package com.duoc.eft.inscripciones.dto;
+package com.duoc.eft.bff.dto;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;

@@ -15,7 +15,7 @@
       </div>
       <div class="session-actions">
         <button id="loginButton">Iniciar sesión</button>
-        <button id="logoutButton" class="secondary" disabled>Cerrar sesión</button>
+        <button id="logoutButton" class="secondary" hidden>Cerrar sesión</button>
       </div>
     </header>
 
@@ -37,7 +37,7 @@
       </section>
 
       <div class="forms-grid">
-        <section class="card">
+        <section id="instructorPanel" class="card" hidden>
           <p class="eyebrow">Instructor</p>
           <h2>Crear curso</h2>
           <form id="courseForm">
@@ -49,18 +49,19 @@
           </form>
         </section>
 
-        <section class="card">
+        <section id="studentPanel" class="card" hidden>
           <p class="eyebrow">Estudiante</p>
           <h2>Inscribirse</h2>
           <form id="enrollmentForm">
-            <label>ID del curso<input name="cursoId" required type="number" min="1" /></label>
-            <label>Identificador estudiante<input name="estudianteId" required /></label>
+            <label>Curso<select id="enrollmentCourseSelect" name="cursoId" required disabled>
+              <option value="">No hay cursos disponibles</option>
+            </select></label>
             <button type="submit" disabled>Crear inscripción</button>
           </form>
         </section>
       </div>
 
-      <section class="card forbidden-card">
+      <section id="authorizationEvidence" class="card forbidden-card" hidden>
         <div><p class="eyebrow">Evidencia de autorización</p><h2>Probar operación prohibida</h2>
           <p id="forbiddenDescription">La acción se habilita después del login.</p></div>
         <button id="forbiddenButton" class="danger" disabled>Ejecutar y esperar 403</button>

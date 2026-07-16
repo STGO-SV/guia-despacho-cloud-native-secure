@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,8 +31,9 @@ public class InscripcionController {
             InscripcionProcesamientoService procesamiento) {
         this.service = service; this.consumoManual = consumoManual; this.procesamiento = procesamiento;
     }
-    @PostMapping ResponseEntity<InscripcionResponse> crear(@Valid @RequestBody InscripcionRequest request) {
-        InscripcionResponse response = service.crear(request);
+    @PostMapping ResponseEntity<InscripcionResponse> crear(@Valid @RequestBody InscripcionRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
+        InscripcionResponse response = service.crear(request, jwt.getSubject());
         return ResponseEntity.created(URI.create("/api/inscripciones/" + response.id())).body(response);
     }
     @GetMapping List<InscripcionResponse> listar() { return service.listar(); }

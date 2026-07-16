@@ -2,6 +2,8 @@ package com.duoc.eft.bff.controller;
 
 import com.duoc.eft.bff.client.CursosClient;
 import com.duoc.eft.bff.client.InscripcionesClient;
+import com.duoc.eft.bff.dto.InscripcionRequest;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,9 +32,9 @@ public class BffController {
         return cursos.crear(json, auth);
     }
     @PostMapping("/inscripciones")
-    ResponseEntity<String> crearInscripcion(@RequestBody String json,
+    ResponseEntity<String> crearInscripcion(@Valid @RequestBody InscripcionRequest request,
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String auth) {
-        return inscripciones.crear(json, auth);
+        return inscripciones.crear(request, auth);
     }
     @GetMapping("/inscripciones/{id}")
     ResponseEntity<String> obtenerInscripcion(@PathVariable Long id,

@@ -40,11 +40,22 @@
 Flujo normal:
 
 ```json
-{"cursoId":2,"estudianteId":"estudiante-001"}
+{"cursoId":2}
+```
+
+`estudianteId` no forma parte de la petición pública. El servicio lo obtiene exclusivamente
+del claim inmutable `sub` del access token ya validado y lo conserva internamente en la
+entidad y en el evento RabbitMQ.
+
+La combinación interna `estudianteId` (`sub`) + `cursoId` es única. Un segundo intento del
+mismo usuario sobre el mismo curso devuelve:
+
+```json
+{"status":409,"message":"El estudiante ya está inscrito en este curso"}
 ```
 
 Fallo académico controlado:
 
 ```json
-{"cursoId":2,"estudianteId":"estudiante-dlq","simularError":true}
+{"cursoId":2,"simularError":true}
 ```
