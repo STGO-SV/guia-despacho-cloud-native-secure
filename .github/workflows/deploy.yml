@@ -105,8 +105,8 @@ jobs:
     needs: build_images
     if: >-
       needs.build_images.result == 'success' &&
-      ((github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-      (github.event_name == 'workflow_dispatch' && inputs.deploy))
+      github.event_name == 'workflow_dispatch' &&
+      inputs.deploy == true
     runs-on: ubuntu-latest
     environment: production
     steps:
