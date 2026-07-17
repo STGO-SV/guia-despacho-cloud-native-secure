@@ -1,14 +1,27 @@
-name: Build and Deploy
+name: EFT Cursos - Build, Publish and Deploy
 
 on:
   push:
-    branches:
-      - eft-cursos
+    branches: [main, eft-cursos]
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Desplegar en EC2 despues de publicar las imagenes
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eft-cursos-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  deploy:
+  test:
+    name: Test backend and frontend
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -17,44 +30,127 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
+          cache: maven
 
-      - name: Build with Maven
+      - name: Test Maven modules
         run: |
           chmod +x ./mvnw
-          ./mvnw clean package
+          ./mvnw -f eft-cursos/pom.xml clean test
 
-      - name: Login to Docker Hub
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: eft-cursos/frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: eft-cursos/frontend
+        run: npm ci
+
+      - name: Test frontend
+        working-directory: eft-cursos/frontend
+        run: npm test
+
+      - name: Build frontend
+        working-directory: eft-cursos/frontend
+        run: npm run build
+
+  build_images:
+    name: Build and push ${{ matrix.component }}
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - component: bff-service
+            dockerfile: eft-cursos/bff-service/Dockerfile
+            image: eft-cursos-bff
+          - component: cursos-service
+            dockerfile: eft-cursos/cursos-service/Dockerfile
+            image: eft-cursos-cursos
+          - component: inscripciones-service
+            dockerfile: eft-cursos/inscripciones-service/Dockerfile
+            image: eft-cursos-inscripciones
+          - component: frontend
+            dockerfile: eft-cursos/frontend/Dockerfile
+            image: eft-cursos-frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub with token
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build and push image
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ./eft-cursos
+          file: ./${{ matrix.dockerfile }}
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/guia-despacho:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:sha-${{ github.sha }}
 
-      - name: Deploy on EC2
+  deploy:
+    name: Deploy EFT stack on EC2
+    needs: build_images
+    if: >-
+      needs.build_images.result == 'success' &&
+      ((github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && inputs.deploy))
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout deployment files
+        uses: actions/checkout@v4
+
+      - name: Validate required EC2 secrets
+        shell: bash
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          missing=0
+          for name in EC2_HOST EC2_USER EC2_SSH_KEY; do
+            if [ -z "${!name}" ]; then
+              echo "::error::$name no esta configurado"
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - name: Copy Compose definition to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "eft-cursos/docker-compose.ec2.yml,eft-cursos/.env.ec2.example"
+          target: /opt/eft-cursos
+          strip_components: 1
+
+      - name: Deploy with Docker Compose
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/guia-despacho:latest
-            docker stop guia-despacho || true
-            docker rm guia-despacho || true
-            docker run -d \
-              --name guia-despacho \
-              --restart unless-stopped \
-              -p 8080:8080 \
-              --env-file /opt/guia-despacho/app.env \
-              --health-cmd='curl --fail --silent http://localhost:8080/actuator/health || exit 1' \
-              --health-interval=15s \
-              --health-retries=10 \
-              --health-start-period=30s \
-              -v /mnt/efs/guias:/mnt/efs/guias \
-              ${{ secrets.DOCKERHUB_USERNAME }}/guia-despacho:latest
+            set -eu
+            cd /opt/eft-cursos
+            test -s .env.ec2 || { echo '.env.ec2 no existe o esta vacio'; exit 1; }
+            export IMAGE_TAG=sha-${{ github.sha }}
+            docker compose --env-file .env.ec2 -f docker-compose.ec2.yml config -q
+            docker compose --env-file .env.ec2 -f docker-compose.ec2.yml pull
+            docker compose --env-file .env.ec2 -f docker-compose.ec2.yml up -d --remove-orphans
+            docker compose --env-file .env.ec2 -f docker-compose.ec2.yml ps
