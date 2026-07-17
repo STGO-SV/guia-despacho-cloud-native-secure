@@ -13,4 +13,4 @@ RUN chmod +x /docker-entrypoint.d/40-render-config.sh
 COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80
 HEALTHCHECK --interval=15s --timeout=5s --retries=10 --start-period=10s \
-  CMD wget --quiet --output-document=- http://localhost/healthz || exit 1
+  CMD wget --quiet --output-document=- http://127.0.0.1/healthz || exit 1
