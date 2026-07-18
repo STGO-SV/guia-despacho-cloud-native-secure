@@ -29,6 +29,7 @@ Este documento no es un archivo de entorno ejecutable y no contiene secretos rea
 | `B2C_REDIRECT_URI` | `https://eft-cursos-ssaez.duckdns.org/` |
 | `B2C_SCOPE` | `https://duocssaezcloudnative.onmicrosoft.com/75d470b0-2bfb-4989-9d81-aa1805f3b546/access_as_user` |
 | `FRONTEND_ALLOWED_ORIGIN` | `https://eft-cursos-ssaez.duckdns.org` |
+| `FRONTEND_PORT` | `8088`, puerto HTTP del frontend publicado solamente en el host EC2 para que Caddy lo consuma |
 | `BFF_BASE_URL` | vacío, para usar el proxy Nginx del mismo origen |
 
 El issuer y el JWKS se obtuvieron del documento OIDC público de `B2C_1_guias_signupsignin`. El issuer contiene el identificador GUID del tenant porque ese es el valor literal publicado y emitido como `iss`; no se debe reemplazar por una URI construida con el nombre de la policy.
@@ -120,3 +121,9 @@ El comando `grep` debe terminar sin resultados. No debe imprimirse el contenido 
 6. Nginx reenvía `/api/` a `http://bff-service:8080`.
 
 Por tanto, no es necesario modificar `frontend/public/config.js` para EC2.
+
+El dominio HTTPS, la configuración de DuckDNS y Caddy, los puertos del Security
+Group y el procedimiento ante un cambio de IP se documentan en
+[`informe-pipeline-deploy-ec2.md`](informe-pipeline-deploy-ec2.md). Este archivo
+solo describe variables de aplicación; no debe contener el token de DuckDNS,
+claves SSH ni secretos de GitHub o EC2.

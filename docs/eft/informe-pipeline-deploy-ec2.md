@@ -1,6 +1,6 @@
 # Informe de pipeline y despliegue EC2 del sistema EFT Cursos
 
-Fecha de validación local inicial: 16 de julio de 2026. Actualización B2C/EC2: 17 de julio de 2026.
+Fecha de validación local inicial: 16 de julio de 2026. Actualización B2C/EC2: 17 de julio de 2026. Documentación HTTPS: 18 de julio de 2026.
 
 ## 1. Estado inicial del workflow
 
@@ -126,28 +126,59 @@ El listado completo está en `.env.ec2.example` y comprende:
 
 No se necesitan AWS access keys mientras `AWS_S3_UPLOAD_ENABLED=false`.
 
-## 9. Preparación requerida en EC2
+## 9. Dominio, DuckDNS y terminación HTTPS
 
-La instancia EC2 ya está activa en `us-east-1`, usa Ubuntu 24.04, tiene Docker Engine y Docker Compose operativos, y dispone de `/opt/eft-cursos` con propietario `ubuntu:ubuntu`. El dominio público actual es `eft-cursos-ssaez.duckdns.org`.
+El dominio definitivo de la EFT es:
 
-Antes de habilitar el deploy todavía se necesita:
+`https://eft-cursos-ssaez.duckdns.org`
 
-1. crear manualmente `/opt/eft-cursos/.env.ec2` y asignarle permisos 600;
-2. completar sus credenciales internas sin guardarlas en Git;
-3. iniciar sesión previamente en Docker Hub si las imágenes son privadas;
-4. confirmar el Security Group con los puertos mínimos;
-5. registrar en Azure B2C el redirect URI público exacto.
+El subdominio configurado en DuckDNS es `eft-cursos-ssaez`. Su registro A debe
+apuntar a la IPv4 pública vigente de la instancia EC2. El Learner Lab puede
+asignar una IP diferente después de detener o reiniciar el entorno; cuando eso
+ocurra, el registro debe actualizarse desde el panel autenticado de DuckDNS.
+El token de DuckDNS es secreto y no debe incluirse en este repositorio, comandos
+capturados, logs ni evidencias.
+
+Caddy termina TLS y se configura en la instancia mediante
+`/etc/caddy/Caddyfile`. La regla relevante es:
+
+```caddyfile
+eft-cursos-ssaez.duckdns.org {
+    reverse_proxy 127.0.0.1:8088
+}
+```
+
+Caddy se administra como servicio systemd habilitado para iniciar con la
+instancia. Su estado se comprueba sin mostrar información sensible:
+
+```bash
+sudo systemctl is-enabled caddy
+sudo systemctl is-active caddy
+```
+
+Los resultados esperados son `enabled` y `active`, respectivamente. Esta
+documentación no sustituye la evidencia tomada directamente desde EC2.
+
+La preparación operativa de `/opt/eft-cursos` requiere mantener `.env.ec2` con
+permisos 600, completar allí las credenciales internas, autenticar Docker Hub
+si las imágenes son privadas y registrar en Azure B2C el redirect URI exacto
+`https://eft-cursos-ssaez.duckdns.org/`.
 
 El workflow copia por SCP `docker-compose.ec2.yml` y `.env.ec2.example`. Nunca copia ni reemplaza `.env.ec2`. La configuración Nginx y la plantilla frontend ya viajan dentro de la imagen frontend.
 
 ## 10. Puertos requeridos
 
-Puertos de entrada recomendados en el Security Group para el dominio HTTPS:
+`FRONTEND_PORT=8088` hace que Compose publique el puerto 80 del contenedor
+frontend en el puerto 8088 del host mediante `${FRONTEND_PORT:-80}:80`. Nginx
+dentro del contenedor sirve la SPA y reenvía `/api/` al BFF. Caddy escucha
+públicamente en 80/443 y reenvía el tráfico HTTPS a `127.0.0.1:8088`.
+
+Puertos de entrada recomendados en el Security Group:
 
 - TCP 22: solo desde la IP administrativa de Santiago o del runner si se adopta esa política;
 - TCP 443: público para `https://eft-cursos-ssaez.duckdns.org`;
-- TCP 80: opcional, únicamente si el terminador TLS lo usa para redirección HTTP o validación ACME;
-- TCP 8088: no público; debe consumirlo el reverse proxy/terminador TLS de la misma instancia.
+- TCP 80: público para la redirección HTTP a HTTPS y la validación ACME de Caddy;
+- TCP 8088: no requiere una regla pública; Caddy lo consume desde la misma instancia.
 
 No deben abrirse públicamente 8080, 8081, 8082, 5672 ni 15672. Esos servicios se comunican por la red Docker. RabbitMQ Management queda instalado por exigencia académica de la imagen, pero no expuesto.
 
@@ -167,16 +198,16 @@ Los valores públicos confirmados son:
 
 El issuer contiene el GUID del tenant porque ese es el valor literal publicado por la metadata OIDC y emitido en `iss`. La policy aparece en la URL de metadata, en el JWKS y normalmente en `tfp`/`acr`, no dentro del issuer. Los resource servers validan issuer exacto, firma y audience, pero actualmente no añaden un validador explícito del claim de policy.
 
-Si posteriormente se cambia a HTTPS o a otro DNS, Azure B2C, `B2C_REDIRECT_URI` y `FRONTEND_ALLOWED_ORIGIN` deben actualizarse juntos. No se modificó ninguna configuración remota Azure durante esta preparación.
+Si posteriormente cambia el dominio DNS, Azure B2C, `B2C_REDIRECT_URI` y `FRONTEND_ALLOWED_ORIGIN` deben actualizarse juntos. No se modificó ninguna configuración remota Azure durante esta preparación.
 
 ## 12. Condiciones que controlan el deploy
 
 - `push` a `eft-cursos`: ejecuta pruebas y publica imágenes; no despliega.
-- `push` a `main`: ejecuta pruebas, publica imágenes y habilita el job de deploy.
+- `push` a `main`: ejecuta pruebas y publica imágenes; no despliega.
 - `workflow_dispatch` con `deploy=false`: prueba y publica, sin deploy.
-- `workflow_dispatch` con `deploy=true`: prueba, publica y habilita deploy desde la revisión seleccionada.
+- `workflow_dispatch` con `deploy=true`: habilita deploy desde la revisión seleccionada solamente si `build_images` termina correctamente.
 
-El job usa el environment GitHub `production`. Se recomienda configurarlo con required reviewers para que incluso un push a `main` necesite aprobación humana antes de acceder a secretos EC2.
+El job usa el environment GitHub `production`. Se recomienda configurarlo con required reviewers como segunda aprobación humana antes de acceder a secretos EC2. Ningún `push` ejecuta el job `deploy`.
 
 El deploy usa siempre `sha-GITHUB_SHA`, ejecuta `docker compose pull`, `up -d --remove-orphans` y `ps`. No usa el tag mutable `latest` para una ejecución automatizada.
 
@@ -234,7 +265,9 @@ docker compose --env-file .env.ec2 -f docker-compose.ec2.yml logs --tail 100 --n
 Comprobar desde EC2:
 
 ```bash
-curl --fail --silent http://localhost/healthz
+curl --fail --silent http://127.0.0.1:8088/healthz
+sudo systemctl is-enabled caddy
+sudo systemctl is-active caddy
 ```
 
 ### Ejecutar Actions manualmente
@@ -265,15 +298,14 @@ git diff --check
 
 ## 15. Riesgos pendientes
 
-- falta crear y completar `.env.ec2` exclusivamente en EC2;
-- falta confirmar que el redirect URI público esté registrado en Azure B2C;
-- el contenedor frontend sirve HTTP en el puerto de host 8088; el dominio HTTPS requiere un reverse proxy/terminador TLS con certificado válido que escuche en 443 y reenvíe internamente a 8088;
-- el hostname actual depende de la IP pública de la instancia; una recreación o cambio de IP rompería redirect URI y CORS;
+- `.env.ec2` debe conservarse exclusivamente en EC2, con permisos 600 y fuera de capturas o logs;
+- el redirect URI HTTPS debe permanecer registrado en Azure B2C exactamente con la barra final;
+- el dominio depende de que DuckDNS apunte a la IPv4 pública vigente de EC2; un cambio de IP interrumpe DNS, HTTPS y el despliegue hasta actualizar DuckDNS y `EC2_HOST`;
 - H2 con volumen es suficiente para la demostración académica, pero no reemplaza una base administrada para alta disponibilidad;
 - `latest` es mutable, aunque el deploy automatizado mitiga este riesgo usando el tag SHA;
 - si Docker Hub es privado, EC2 necesita autenticación de lectura;
 - las Actions de terceros están referenciadas por tag y no por SHA inmutable;
-- un push a `main` habilita deploy; debe protegerse `main` y configurar aprobación en el environment `production`;
+- aunque solo la ejecución manual con `deploy=true` habilita deploy, conviene proteger `main` y configurar aprobación en el environment `production`;
 - Spring valida issuer, firma y audience, pero no valida explícitamente `tfp`/`acr` contra `B2C_1_guias_signupsignin`;
 - el pipeline no puede comprobar localmente el contenido correcto de `.env.ec2` ni el registro remoto del redirect URI.
 
@@ -339,3 +371,61 @@ No se creó `.env.ec2` en el repositorio. El workflow seguirá copiando `.env.ec
 - no se ejecutó GitHub Actions;
 - no hubo conexión SSH/SCP ni otra conexión a EC2;
 - no se ejecutó commit, push ni otra operación Git de escritura.
+
+## 19. Procedimiento ante cambio de IP pública de EC2
+
+1. Iniciar el Learner Lab y esperar que la instancia EC2 quede disponible.
+2. Obtener la nueva **IPv4 pública** desde la consola de EC2. No usar la IP
+   privada ni un hostname antiguo.
+3. Actualizar el subdominio `eft-cursos-ssaez` desde el panel de DuckDNS para
+   que apunte a esa IPv4. No copiar ni capturar el token de DuckDNS.
+4. Actualizar solamente el secreto `EC2_HOST` en GitHub Actions con el nuevo
+   host o IPv4. `EC2_USER` y `EC2_SSH_KEY` no cambian por una reasignación de IP
+   y no deben modificarse.
+5. Verificar la propagación DNS desde PowerShell:
+
+   ```powershell
+   Resolve-DnsName eft-cursos-ssaez.duckdns.org -Type A
+   ```
+
+   La dirección devuelta debe coincidir con la IPv4 pública vigente de EC2.
+6. Verificar la respuesta HTTPS y el certificado:
+
+   ```powershell
+   curl.exe -I https://eft-cursos-ssaez.duckdns.org/
+   ```
+
+7. Solo después de esas comprobaciones, ejecutar manualmente el workflow con
+   `deploy=true` si es necesario desplegar una nueva revisión.
+
+El dominio, `B2C_REDIRECT_URI` y `FRONTEND_ALLOWED_ORIGIN` permanecen iguales
+cuando solo cambia la IP; no se deben reemplazar por la dirección numérica.
+
+## 20. Evidencia manual del workflow CI/CD
+
+El workflow que debe respaldar la evidencia se llama
+**EFT Cursos - Build, Publish and Deploy** y está definido en
+`.github/workflows/deploy.yml`. Su ejecución exitosa debe mostrar:
+
+1. `Test backend and frontend`: pruebas Maven, pruebas npm y build Vite;
+2. cuatro jobs verdes `Build and push ...`: construcción y publicación de las
+   imágenes BFF, cursos, inscripciones y frontend;
+3. `Deploy EFT stack on EC2`: validación de secretos, copia de los archivos de
+   despliegue y ejecución de Docker Compose, únicamente para una ejecución
+   manual con `deploy=true`.
+
+El repositorio no contiene un enlace ni un ID verificable de una ejecución
+remota concreta, por lo que no se registra uno en este informe. Santiago debe
+agregar manualmente capturas de una ejecución realmente verde. Ubicación
+recomendada si se incorporan como evidencia versionada:
+
+- `docs/eft/evidencias/workflow-cicd-resumen-verde.png`: vista completa de los
+  jobs y su estado;
+- `docs/eft/evidencias/workflow-cicd-deploy-verde.png`: detalle del job de
+  despliegue, sin expandir ni mostrar secretos.
+
+Después de guardar las capturas, pueden insertarse inmediatamente bajo este
+párrafo con enlaces Markdown relativos. La captura debe dejar visibles el
+nombre del workflow, la rama/revisión, los jobs verdes y la fecha; puede ocultar
+el actor u otros datos personales. No debe mostrar tokens, claves SSH,
+contraseñas, el contenido de `.env.ec2` ni valores de GitHub Secrets.
