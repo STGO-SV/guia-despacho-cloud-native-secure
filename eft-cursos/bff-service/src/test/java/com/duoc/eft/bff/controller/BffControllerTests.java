@@ -49,9 +49,16 @@ class BffControllerTests {
     }
 
     @Test void reenviaConsultaYAuthorization() throws Exception {
-        when(cursos.listar("Bearer token-demo")).thenReturn(ResponseEntity.ok("[]"));
+        HttpHeaders downstreamHeaders = new HttpHeaders();
+        downstreamHeaders.add("transfer-encoding", "chunked");
+        downstreamHeaders.setContentType(MediaType.APPLICATION_JSON);
+        when(cursos.listar("Bearer token-demo"))
+                .thenReturn(ResponseEntity.ok().headers(downstreamHeaders).body("[]"));
         mvc.perform(get("/api/bff/cursos").header("Authorization", "Bearer token-demo"))
-                .andExpect(status().isOk()).andExpect(content().json("[]"));
+                .andExpect(status().isOk())
+                .andExpect(header().doesNotExist(HttpHeaders.TRANSFER_ENCODING))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().json("[]"));
         verify(cursos).listar("Bearer token-demo");
     }
     @Test void reenviaCreacionInscripcion() throws Exception {

@@ -1,5 +1,6 @@
 package com.duoc.eft.bff.exception;
 
+import com.duoc.eft.bff.http.DownstreamResponseSanitizer;
 import java.time.Instant;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -13,8 +14,8 @@ import org.springframework.web.client.ResourceAccessException;
 public class BffExceptionHandler {
     @ExceptionHandler(RestClientResponseException.class)
     ResponseEntity<String> downstream(RestClientResponseException ex) {
-        return ResponseEntity.status(ex.getStatusCode()).headers(headers ->
-                headers.setContentType(ex.getResponseHeaders() == null ? null : ex.getResponseHeaders().getContentType()))
+        return ResponseEntity.status(ex.getStatusCode())
+                .headers(DownstreamResponseSanitizer.copyAllowedHeaders(ex.getResponseHeaders()))
                 .body(ex.getResponseBodyAsString());
     }
     @ExceptionHandler(ResourceAccessException.class)
@@ -23,4 +24,3 @@ public class BffExceptionHandler {
                 "timestamp", Instant.now(), "status", 503, "message", "Servicio interno no disponible"));
     }
 }
-
