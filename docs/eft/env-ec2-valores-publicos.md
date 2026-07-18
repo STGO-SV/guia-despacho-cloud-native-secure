@@ -26,9 +26,9 @@ Este documento no es un archivo de entorno ejecutable y no contiene secretos rea
 | `B2C_CLIENT_ID` | `b91690e3-e8f3-435c-8aaa-6e8eb7f263ed` |
 | `B2C_AUTHORITY` | `https://duocssaezcloudnative.b2clogin.com/duocssaezcloudnative.onmicrosoft.com/B2C_1_guias_signupsignin` |
 | `B2C_KNOWN_AUTHORITY` | `duocssaezcloudnative.b2clogin.com` |
-| `B2C_REDIRECT_URI` | `http://ec2-3-89-27-87.compute-1.amazonaws.com/` |
+| `B2C_REDIRECT_URI` | `https://eft-cursos-ssaez.duckdns.org/` |
 | `B2C_SCOPE` | `https://duocssaezcloudnative.onmicrosoft.com/75d470b0-2bfb-4989-9d81-aa1805f3b546/access_as_user` |
-| `FRONTEND_ALLOWED_ORIGIN` | `http://ec2-3-89-27-87.compute-1.amazonaws.com` |
+| `FRONTEND_ALLOWED_ORIGIN` | `https://eft-cursos-ssaez.duckdns.org` |
 | `BFF_BASE_URL` | vacío, para usar el proxy Nginx del mismo origen |
 
 El issuer y el JWKS se obtuvieron del documento OIDC público de `B2C_1_guias_signupsignin`. El issuer contiene el identificador GUID del tenant porque ese es el valor literal publicado y emitido como `iss`; no se debe reemplazar por una URI construida con el nombre de la policy.
@@ -77,13 +77,13 @@ INSCRIPCIONES_DB_URL=jdbc:h2:file:/data/inscripciones
 INSCRIPCIONES_DB_USERNAME=sa
 INSCRIPCIONES_DB_PASSWORD=<GENERAR_SECRETO_INSCRIPCIONES>
 
-FRONTEND_ALLOWED_ORIGIN=http://ec2-3-89-27-87.compute-1.amazonaws.com
-FRONTEND_PORT=80
+FRONTEND_ALLOWED_ORIGIN=https://eft-cursos-ssaez.duckdns.org
+FRONTEND_PORT=8088
 
 B2C_CLIENT_ID=b91690e3-e8f3-435c-8aaa-6e8eb7f263ed
 B2C_AUTHORITY=https://duocssaezcloudnative.b2clogin.com/duocssaezcloudnative.onmicrosoft.com/B2C_1_guias_signupsignin
 B2C_KNOWN_AUTHORITY=duocssaezcloudnative.b2clogin.com
-B2C_REDIRECT_URI=http://ec2-3-89-27-87.compute-1.amazonaws.com/
+B2C_REDIRECT_URI=https://eft-cursos-ssaez.duckdns.org/
 B2C_SCOPE=https://duocssaezcloudnative.onmicrosoft.com/75d470b0-2bfb-4989-9d81-aa1805f3b546/access_as_user
 BFF_BASE_URL=
 ```

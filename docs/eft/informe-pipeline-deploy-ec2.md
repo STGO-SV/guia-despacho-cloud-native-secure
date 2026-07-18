@@ -81,7 +81,7 @@ Al arrancar el contenedor, `40-render-config.sh` genera `/usr/share/nginx/html/c
 
 `docker-compose.ec2.yml` contiene:
 
-- `frontend`, con Nginx y puerto público configurable, por defecto 80;
+- `frontend`, con Nginx y puerto de host configurable; la plantilla actual usa 8088 y Compose conserva el fallback 80;
 - `bff-service`, accesible solo dentro de la red Docker;
 - `cursos-service`, accesible solo dentro de la red Docker;
 - `inscripciones-service`, accesible solo dentro de la red Docker;
@@ -128,7 +128,7 @@ No se necesitan AWS access keys mientras `AWS_S3_UPLOAD_ENABLED=false`.
 
 ## 9. Preparación requerida en EC2
 
-La instancia EC2 ya está activa en `us-east-1`, usa Ubuntu 24.04, tiene Docker Engine y Docker Compose operativos, y dispone de `/opt/eft-cursos` con propietario `ubuntu:ubuntu`. El host actual es `ec2-3-89-27-87.compute-1.amazonaws.com`.
+La instancia EC2 ya está activa en `us-east-1`, usa Ubuntu 24.04, tiene Docker Engine y Docker Compose operativos, y dispone de `/opt/eft-cursos` con propietario `ubuntu:ubuntu`. El dominio público actual es `eft-cursos-ssaez.duckdns.org`.
 
 Antes de habilitar el deploy todavía se necesita:
 
@@ -142,11 +142,12 @@ El workflow copia por SCP `docker-compose.ec2.yml` y `.env.ec2.example`. Nunca c
 
 ## 10. Puertos requeridos
 
-Puertos de entrada recomendados en el Security Group:
+Puertos de entrada recomendados en el Security Group para el dominio HTTPS:
 
 - TCP 22: solo desde la IP administrativa de Santiago o del runner si se adopta esa política;
-- TCP 80: público para la demostración HTTP;
-- TCP 443: público cuando se incorpore TLS.
+- TCP 443: público para `https://eft-cursos-ssaez.duckdns.org`;
+- TCP 80: opcional, únicamente si el terminador TLS lo usa para redirección HTTP o validación ACME;
+- TCP 8088: no público; debe consumirlo el reverse proxy/terminador TLS de la misma instancia.
 
 No deben abrirse públicamente 8080, 8081, 8082, 5672 ni 15672. Esos servicios se comunican por la red Docker. RabbitMQ Management queda instalado por exigencia académica de la imagen, pero no expuesto.
 
@@ -159,8 +160,8 @@ Los valores públicos confirmados son:
 - audience/API Client ID: `75d470b0-2bfb-4989-9d81-aa1805f3b546`;
 - SPA Client ID: `b91690e3-e8f3-435c-8aaa-6e8eb7f263ed`;
 - scope: `https://duocssaezcloudnative.onmicrosoft.com/75d470b0-2bfb-4989-9d81-aa1805f3b546/access_as_user`;
-- redirect URI: `http://ec2-3-89-27-87.compute-1.amazonaws.com/`;
-- origen CORS, sin barra final: `http://ec2-3-89-27-87.compute-1.amazonaws.com`.
+- redirect URI: `https://eft-cursos-ssaez.duckdns.org/`;
+- origen CORS, sin barra final: `https://eft-cursos-ssaez.duckdns.org`.
 
 `GESTION_GUIAS` y `DESCARGA_GUIAS` son roles leídos desde `extension_RolGuia`; no son scopes OAuth2. Los aliases `INSTRUCTOR` y `ESTUDIANTE` siguen admitidos internamente.
 
@@ -266,7 +267,7 @@ git diff --check
 
 - falta crear y completar `.env.ec2` exclusivamente en EC2;
 - falta confirmar que el redirect URI público esté registrado en Azure B2C;
-- HTTP no protege el tráfico; para una entrega accesible por Internet se recomienda DNS y TLS;
+- el contenedor frontend sirve HTTP en el puerto de host 8088; el dominio HTTPS requiere un reverse proxy/terminador TLS con certificado válido que escuche en 443 y reenvíe internamente a 8088;
 - el hostname actual depende de la IP pública de la instancia; una recreación o cambio de IP rompería redirect URI y CORS;
 - H2 con volumen es suficiente para la demostración académica, pero no reemplaza una base administrada para alta disponibilidad;
 - `latest` es mutable, aunque el deploy automatizado mitiga este riesgo usando el tag SHA;
