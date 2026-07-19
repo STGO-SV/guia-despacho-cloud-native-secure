@@ -20,8 +20,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class InscripcionService {
     private final InscripcionRepository repository;
     private final InscripcionEventoPublisher publisher;
-    public InscripcionService(InscripcionRepository repository, InscripcionEventoPublisher publisher) {
-        this.repository = repository; this.publisher = publisher;
+    private final ComprobantePdfGenerator pdfGenerator;
+    private final S3ComprobanteStorage comprobanteStorage;
+    public InscripcionService(InscripcionRepository repository, InscripcionEventoPublisher publisher,
+            ComprobantePdfGenerator pdfGenerator, S3ComprobanteStorage comprobanteStorage) {
+        this.repository = repository;
+        this.publisher = publisher;
+        this.pdfGenerator = pdfGenerator;
+        this.comprobanteStorage = comprobanteStorage;
     }
     @Transactional
     public InscripcionResponse crear(InscripcionRequest request, String authenticatedSubject) {
@@ -39,9 +45,16 @@ public class InscripcionService {
         } catch (DataIntegrityViolationException ex) {
             throw new InscripcionDuplicadaException(ex);
         }
+        Instant fechaHora = Instant.now();
+        String key = "2026/inscripciones/" + inscripcion.getId()
+                + "/comprobante-inscripcion.pdf";
+        byte[] pdf = pdfGenerator.generar(inscripcion, fechaHora);
+        boolean almacenado = comprobanteStorage.guardar(key, pdf);
+        inscripcion.setComprobanteS3Key(key);
+        inscripcion.setComprobanteAlmacenado(almacenado);
         UUID eventoId = UUID.randomUUID();
         publisher.publicar(new InscripcionCreadaEvento(eventoId, inscripcion.getId(),
-                inscripcion.getCursoId(), inscripcion.getEstudianteId(), Instant.now(),
+                inscripcion.getCursoId(), inscripcion.getEstudianteId(), fechaHora,
                 request.simularError()));
         return InscripcionResponse.from(inscripcion, eventoId);
     }

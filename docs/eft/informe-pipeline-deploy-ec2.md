@@ -119,12 +119,13 @@ El listado completo está en `.env.ec2.example` y comprende:
 - issuer, JWKS, audience y claim de roles;
 - credenciales internas RabbitMQ;
 - URLs, usuarios y contraseñas de las dos bases H2;
-- región y nombre de bucket, con subida S3 deshabilitada;
+- activación S3, región y bucket privado para comprobantes de inscripción;
 - origen público del frontend;
 - Client ID, authority, known authority, redirect URI y scope públicos de la SPA;
 - `BFF_BASE_URL` vacío para usar el proxy del mismo origen.
 
-No se necesitan AWS access keys mientras `AWS_S3_UPLOAD_ENABLED=false`.
+No se guardan AWS access keys. En EC2, `inscripciones-service` usa
+`DefaultCredentialsProvider` y el perfil IAM asociado a la instancia.
 
 ## 9. Dominio, DuckDNS y terminación HTTPS
 
@@ -221,12 +222,18 @@ El deploy usa siempre `sha-GITHUB_SHA`, ejecuta `docker compose pull`, `up -d --
 - renderizado con `IMAGE_TAG=sha-validation`: las cuatro imágenes EFT usan el tag SHA y RabbitMQ conserva su imagen oficial;
 - `npm test`: 8 pruebas aprobadas;
 - `npm run build`: correcto, 146 módulos transformados;
-- `.\mvnw.cmd -f eft-cursos\pom.xml test`: BUILD SUCCESS, 33 pruebas aprobadas;
+- reactor `eft-cursos/pom.xml test`: BUILD SUCCESS, 44 pruebas aprobadas (6 cursos, 27 inscripciones y 11 BFF);
 - build local de `bff`, `cursos`, `inscripciones` y `frontend`: correcto;
 - ejecución temporal de la imagen frontend: estado `healthy`, `/healthz` HTTP 200 y `config.js` generado con los valores públicos EC2;
 - `git diff --check`: correcto.
 
 No se publicó ninguna imagen, no se ejecutó el workflow remoto y no se intentó conectar a EC2.
+
+Santiago confirmó por separado que el perfil IAM de EC2 permite
+`sts get-caller-identity`, listar el bucket `guia-despacho-ssaezv-dcn` y subir
+un archivo de prueba con AWS CLI. Esa evidencia valida el host y el bucket, pero
+la primera carga realizada desde el contenedor `inscripciones-service` debe
+comprobarse manualmente después de reconstruir y desplegar la imagen nueva.
 
 ## 14. Comandos exactos para continuar
 
@@ -346,7 +353,7 @@ El build Vite incluye inicialmente `public/config.js`, pero no es la configuraci
 - entrega Client ID SPA, authority, known authority, redirect URI, scope y BFF base al frontend;
 - publica únicamente `${FRONTEND_PORT:-80}:80`;
 - no publica RabbitMQ, BFF, cursos ni inscripciones;
-- mantiene S3 deshabilitado. `AWS_S3_BUCKET` es opcional y su ausencia usa un default que no activa llamadas AWS.
+- habilita S3 para `inscripciones-service` mediante `.env.ec2`; el valor por defecto de la aplicación y Compose sigue siendo `false`.
 
 La prueba runtime detectó que BusyBox `wget` no alcanzaba Nginx mediante `localhost` en esta imagen Alpine, aunque `127.0.0.1` sí respondía. Se corrigieron los healthchecks del Dockerfile y del compose a `http://127.0.0.1/healthz`; la imagen reconstruida alcanzó el estado `healthy`.
 

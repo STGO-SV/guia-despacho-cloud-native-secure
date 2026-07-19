@@ -12,6 +12,7 @@ import com.duoc.eft.inscripciones.config.SecurityConfig;
 import com.duoc.eft.inscripciones.dto.InscripcionRequest;
 import com.duoc.eft.inscripciones.dto.InscripcionResponse;
 import com.duoc.eft.inscripciones.exception.InscripcionDuplicadaException;
+import com.duoc.eft.inscripciones.exception.ComprobanteStorageException;
 import com.duoc.eft.inscripciones.service.ConsumoManualService;
 import com.duoc.eft.inscripciones.service.InscripcionProcesamientoService;
 import com.duoc.eft.inscripciones.service.InscripcionService;
@@ -48,7 +49,8 @@ class InscripcionControllerTests {
         when(jwtDecoder.decode("token-estudiante")).thenReturn(token);
         when(service.crear(new InscripcionRequest(3L, false), "sub-estudiante-autenticado"))
                 .thenReturn(new InscripcionResponse(9L, 3L, "sub-estudiante-autenticado",
-                        LocalDate.now(), "CREADA", UUID.randomUUID()));
+                        LocalDate.now(), "CREADA", UUID.randomUUID(),
+                        "2026/inscripciones/9/comprobante-inscripcion.pdf", true));
     }
 
     @Test void requestPublicoSoloRequiereCursoYUsaSub() throws Exception {
@@ -87,5 +89,18 @@ class InscripcionControllerTests {
                         .contentType(MediaType.APPLICATION_JSON).content("{\"cursoId\":3}"))
                 .andExpect(status().isForbidden());
         verifyNoInteractions(service);
+    }
+
+    @Test void falloS3Devuelve502Controlado() throws Exception {
+        when(service.crear(new InscripcionRequest(3L, false), "sub-estudiante-autenticado"))
+                .thenThrow(new ComprobanteStorageException("detalle interno de AWS"));
+
+        mvc.perform(post("/api/inscripciones")
+                        .header("Authorization", "Bearer token-estudiante")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"cursoId\":3}"))
+                .andExpect(status().isBadGateway())
+                .andExpect(jsonPath("$.status").value(502))
+                .andExpect(jsonPath("$.message")
+                        .value("No fue posible almacenar el comprobante de inscripción"));
     }
 }

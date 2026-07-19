@@ -29,7 +29,7 @@
 
 | Método | Ruta | Uso |
 | --- | --- | --- |
-| POST | `/api/inscripciones` | Crear y publicar evento; acepta `simularError` opcional |
+| POST | `/api/inscripciones` | Crear, generar comprobante PDF, almacenar en S3 y publicar evento; acepta `simularError` opcional |
 | GET | `/api/inscripciones` | Listar |
 | GET | `/api/inscripciones/{id}` | Consultar |
 | GET | `/api/inscripciones/curso/{cursoId}` | Consultar por curso |
@@ -53,6 +53,33 @@ mismo usuario sobre el mismo curso devuelve:
 ```json
 {"status":409,"message":"El estudiante ya está inscrito en este curso"}
 ```
+
+Una inscripción creada en EC2 con S3 habilitado responde HTTP 201 e incluye la
+key privada del comprobante, sin generar una URL pública:
+
+```json
+{
+  "id": 7,
+  "cursoId": 2,
+  "estudianteId": "sub-del-token",
+  "estado": "CREADA",
+  "comprobanteS3Key": "2026/inscripciones/7/comprobante-inscripcion.pdf",
+  "comprobanteAlmacenado": true
+}
+```
+
+El PDF contiene el ID de inscripción, curso, `sub` del estudiante, fecha/hora
+UTC y confirmación de éxito. Si `AWS_S3_UPLOAD_ENABLED=false`, se genera el PDF
+y se persiste la key prevista, pero no se llama AWS y
+`comprobanteAlmacenado=false`; esto mantiene funcionales las pruebas y el
+entorno local.
+
+La generación y la subida ocurren dentro de la transacción de creación. Si S3
+falla, el servicio devuelve HTTP 502 con el mensaje controlado `No fue posible
+almacenar el comprobante de inscripción`, revierte la inscripción y no publica
+el evento RabbitMQ. Un duplicado se rechaza antes del PDF/S3 con HTTP 409, y una
+solicitud sin permiso se rechaza por Spring Security con HTTP 403 antes de
+invocar el servicio.
 
 Fallo académico controlado:
 

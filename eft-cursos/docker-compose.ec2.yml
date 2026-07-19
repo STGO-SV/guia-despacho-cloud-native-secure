@@ -62,6 +62,9 @@ services:
       RABBITMQ_USERNAME: "${RABBITMQ_USERNAME:?Defina RABBITMQ_USERNAME en .env.ec2}"
       RABBITMQ_PASSWORD: "${RABBITMQ_PASSWORD:?Defina RABBITMQ_PASSWORD en .env.ec2}"
       RABBITMQ_LISTENER_AUTO_STARTUP: "${RABBITMQ_LISTENER_AUTO_STARTUP:-true}"
+      AWS_S3_UPLOAD_ENABLED: "${AWS_S3_UPLOAD_ENABLED:-false}"
+      AWS_REGION: "${AWS_REGION:-us-east-1}"
+      AWS_S3_BUCKET: "${AWS_S3_BUCKET:-guia-despacho-ssaezv-dcn}"
     expose: ["8082"]
     volumes:
       - inscripciones-data:/data

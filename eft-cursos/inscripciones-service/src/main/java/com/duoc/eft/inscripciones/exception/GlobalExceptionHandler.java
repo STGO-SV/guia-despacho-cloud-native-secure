@@ -27,4 +27,16 @@ public class GlobalExceptionHandler {
                 "timestamp", Instant.now(), "status", 409,
                 "message", "El estudiante ya está inscrito en este curso"));
     }
+    @ExceptionHandler(ComprobanteStorageException.class)
+    ResponseEntity<Map<String, Object>> storage(ComprobanteStorageException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(Map.of(
+                "timestamp", Instant.now(), "status", 502,
+                "message", "No fue posible almacenar el comprobante de inscripción"));
+    }
+    @ExceptionHandler(ComprobanteGeneracionException.class)
+    ResponseEntity<Map<String, Object>> pdf(ComprobanteGeneracionException ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "timestamp", Instant.now(), "status", 500,
+                "message", "No fue posible generar el comprobante de inscripción"));
+    }
 }

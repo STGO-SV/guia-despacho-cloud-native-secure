@@ -31,6 +31,9 @@ Este documento no es un archivo de entorno ejecutable y no contiene secretos rea
 | `FRONTEND_ALLOWED_ORIGIN` | `https://eft-cursos-ssaez.duckdns.org` |
 | `FRONTEND_PORT` | `8088`, puerto HTTP del frontend publicado solamente en el host EC2 para que Caddy lo consuma |
 | `BFF_BASE_URL` | vacío, para usar el proxy Nginx del mismo origen |
+| `AWS_S3_UPLOAD_ENABLED` | `true` en EC2; si se omite, la aplicación usa `false` |
+| `AWS_REGION` | `us-east-1` |
+| `AWS_S3_BUCKET` | `guia-despacho-ssaezv-dcn` |
 
 El issuer y el JWKS se obtuvieron del documento OIDC público de `B2C_1_guias_signupsignin`. El issuer contiene el identificador GUID del tenant porque ese es el valor literal publicado y emitido como `iss`; no se debe reemplazar por una URI construida con el nombre de la policy.
 
@@ -78,6 +81,10 @@ INSCRIPCIONES_DB_URL=jdbc:h2:file:/data/inscripciones
 INSCRIPCIONES_DB_USERNAME=sa
 INSCRIPCIONES_DB_PASSWORD=<GENERAR_SECRETO_INSCRIPCIONES>
 
+AWS_S3_UPLOAD_ENABLED=true
+AWS_REGION=us-east-1
+AWS_S3_BUCKET=guia-despacho-ssaezv-dcn
+
 FRONTEND_ALLOWED_ORIGIN=https://eft-cursos-ssaez.duckdns.org
 FRONTEND_PORT=8088
 
@@ -89,7 +96,23 @@ B2C_SCOPE=https://duocssaezcloudnative.onmicrosoft.com/75d470b0-2bfb-4989-9d81-a
 BFF_BASE_URL=
 ```
 
-S3 está deshabilitado mediante `AWS_S3_UPLOAD_ENABLED=false` en el compose. `AWS_REGION` y `AWS_S3_BUCKET` son opcionales y los defaults no activan ninguna llamada AWS. No se requieren access keys.
+`inscripciones-service` usa AWS SDK v2 con `DefaultCredentialsProvider`. En EC2
+obtiene credenciales temporales del perfil IAM de la instancia. No deben
+agregarse `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` ni session tokens al
+repositorio o a `.env.ec2`. El modo local conserva
+`AWS_S3_UPLOAD_ENABLED=false` y no intenta conectarse a AWS.
+
+El perfil IAM necesita como mínimo `s3:PutObject` sobre
+`arn:aws:s3:::guia-despacho-ssaezv-dcn/2026/inscripciones/*`. Como el servicio
+se ejecuta dentro de Docker, se debe verificar que el contenedor pueda consultar
+IMDSv2; si la instancia restringe el hop limit de metadata a 1, debe ajustarse a
+un valor compatible con contenedores antes del despliegue. Esto no requiere ni
+autoriza guardar credenciales estáticas.
+
+El workflow no reemplaza `/opt/eft-cursos/.env.ec2`. Santiago debe añadir o
+actualizar manualmente allí `AWS_S3_UPLOAD_ENABLED=true`, `AWS_REGION=us-east-1`
+y `AWS_S3_BUCKET=guia-despacho-ssaezv-dcn` antes de recrear
+`inscripciones-service`.
 
 ## Creación manual en EC2
 
